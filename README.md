@@ -1,2 +1,1 @@
-# FEW
-## Flood Early Warning System
+# FEW - Flood Early Warning System

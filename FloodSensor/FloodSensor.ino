@@ -84,10 +84,9 @@ void setup() {
     }
 
     Settings.LoadConfig();
-
+    
     Sms.onReceive(onReceive);
     Sms.init();
-
 }
 
 // the loop function runs over and over again until power down or reset

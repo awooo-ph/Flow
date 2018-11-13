@@ -14,6 +14,7 @@
 class SmsClass
 {
  private:
+    SoftwareSerial* sms;
     bool _isReady = false;
     bool _isRegistered = false;
     long _lastCREG = 0;
@@ -29,6 +30,7 @@ class SmsClass
     void (*onReceiveCallback)(char* number, char* message) = nullptr;
     
  public:
+    SmsClass(uint8_t rx, uint8_t tx);
 	void init();
     bool isReady(){return _isReady;}
     bool isRegistered(){return _isRegistered;}
@@ -45,7 +47,4 @@ class SmsClass
     
 };
 
-extern SmsClass Sms;
-
 #endif
-

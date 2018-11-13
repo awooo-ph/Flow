@@ -1,6 +1,5 @@
 #include "Settings.h"
 
-
 void SettingsClass::LoadConfig()
 {
 
@@ -10,7 +9,7 @@ void SettingsClass::LoadConfig()
 	unsigned char t;
 
 	for (unsigned int i = 0; i < sizeof(Current); i++) {
-		t = (unsigned char)EEPROM.read(i);//(i+start);
+		t = (unsigned char)EEPROM.read(i);
 		*((char *)&Current + i) = t;
 		if (i < sizeof(Current) - sizeof(Current.checksum)) {
 			/* Don't checksum the checksum! */

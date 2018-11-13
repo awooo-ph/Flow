@@ -15,7 +15,7 @@
 struct Config
 {
     byte SirenLevel[3] = { 1,2,3 };
-    byte NotifyLevel[5] = { true,true,true,true,true };
+    bool NotifyLevel[5] = { true,true,true,true,true };
     char * Monitor[4];
     char * NotifyNumbers[7];
     char * LevelMessage[5];

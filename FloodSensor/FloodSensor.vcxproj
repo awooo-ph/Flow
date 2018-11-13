@@ -114,11 +114,13 @@
   <ItemGroup>
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Sms.h" />
+    <ClInclude Include="WaterLevel.h" />
     <ClInclude Include="__vm\.FloodSensor.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Sms.cpp" />
+    <ClCompile Include="WaterLevel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

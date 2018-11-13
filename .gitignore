@@ -334,3 +334,5 @@ Arduino/__vm/Configuration.Debug.vmps.xml
 FloodSensor/__vm/Compile.vmps.xml
 FloodSensor/__vm/.FloodSensor.vsarduino.h
 FloodSensor/__vm/Configuration.Debug.vmps.xml
+FloodSensor/__vm/Upload.vmps.xml
+FloodSensor/__vm/Configuration.Release.vmps.xml

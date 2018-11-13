@@ -331,3 +331,6 @@ ASALocalRun/
 Arduino/__vm/Compile.vmps.xml
 Arduino/__vm/.Arduino.vsarduino.h
 Arduino/__vm/Configuration.Debug.vmps.xml
+FloodSensor/__vm/Compile.vmps.xml
+FloodSensor/__vm/.FloodSensor.vsarduino.h
+FloodSensor/__vm/Configuration.Debug.vmps.xml

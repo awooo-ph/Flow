@@ -23,7 +23,7 @@ void OnWaterLevelChanged(uint8_t level)
     for (auto i = 0; i < 3; i++)
     {
         auto pin = SirenPIN[i];
-        if (Settings.Current.SirenLevel[i] == level)
+        if (Settings.Current.SirenLevel[i] == level+1)
         {
             digitalWrite(SIREN_POWER, LOW);
             delay(777);
@@ -48,8 +48,9 @@ void OnWaterLevelChanged(uint8_t level)
 
 void onReceive(char* number, char* message)
 {
-    if (message[0] == '?')
-    {
+    switch (message[0]) {
+    case '?':
+
         Sms.startSend(number);
         Sms.write("!");
         Sms.write(message[1]);
@@ -64,9 +65,35 @@ void onReceive(char* number, char* message)
         case 'i':
             Sms.write(Sms.getIMEI());
             break;
+        default:
+            Sms.write(message[1]);
+        }
+        Sms.commitSend();
+        break;
+    case '=':
+        switch (message[1])
+        {
+        case '@':
+            for(auto i=2;i<strlen(message);i++)
+            {
+                if(i<17)
+                    Settings.Current.SensorName[i-2] = message[i];
+                if(message[i]=='\0') break;
+            }
+            break;
+        case '#':
+            for(auto i=0;i<5;i++)
+               Settings.Current.NotifyLevel[i] = message[i+2]=='1';
+            for(auto i=0;i<3;i++)
+                Settings.Current.SirenLevel[i] = message[i+7];
+            break;
+        
+        default: ;
         }
 
-        Sms.commitSend();
+        Settings.SaveConfig();
+        break;
+    default:;
     }
 }
 

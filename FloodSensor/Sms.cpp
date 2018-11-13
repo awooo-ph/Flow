@@ -8,14 +8,13 @@ const char CMGF[]   PROGMEM = "AT+CMGF=1\r";            // Select Message Format
 const char CSCS[]   PROGMEM = "AT+CSCS=\"GSM\"\r";      // Select Character Set
 const char OK[]     PROGMEM = "OK";
 const char ERROR[]  PROGMEM = "ERROR";
-const char CSQR[]   PROGMEM = "+CSQ:";
-const char CREGR[]  PROGMEM = "+CREG:";
 
-const char* const COMMANDS[] PROGMEM = {AT,CREG1,CSMS,CNMI,CMGF,CSCS};
+const char* const COMMANDS[] PROGMEM = { AT,CREG1,CSMS,CNMI,CMGF,CSCS };
+
 
 SmsClass::SmsClass(uint8_t rx, uint8_t tx)
 {
-    sms = new SoftwareSerial(rx,tx);
+    sms = new SoftwareSerial(rx, tx);
 }
 
 void SmsClass::init()
@@ -26,12 +25,12 @@ void SmsClass::init()
 
     sms->begin(9600);
 
-    while (!sms){}
+    while (!sms) {}
 
-    for (auto i=1;i<7;i++)
+    for (auto i = 1; i < 7; i++)
     {
         bool ok = false;
-        strcpy_P(cmd,(char*)pgm_read_word(&(COMMANDS[i-1])));
+        strcpy_P(cmd, (char*)pgm_read_word(&(COMMANDS[i - 1])));
         while (!ok)
         {
             delay(777);
@@ -39,7 +38,7 @@ void SmsClass::init()
             ok = waitOk();
         }
     }
-    
+
     _isReady = true;
 
     delay(777);
@@ -80,11 +79,11 @@ char* SmsClass::readLine()
 /// Returns the signal strength (0-4)
 uint8_t SmsClass::getSignal()
 {
-    if(csq<7) return 0;
-    if(csq<10) return 1;
-    if(csq<15) return 2;
-    if(csq<19) return 3;
-    if(csq==99) return 0;
+    if (csq < 7) return 0;
+    if (csq < 10) return 1;
+    if (csq < 15) return 2;
+    if (csq < 19) return 3;
+    if (csq == 99) return 0;
     return 4;
 }
 
@@ -101,7 +100,7 @@ void SmsClass::send(char* number, char* text)
     commitSend();
 }
 
-void SmsClass::onReceive(void (* callback)(char* number, char* message))
+void SmsClass::onReceive(void(*callback)(char* number, char* message))
 {
     onReceiveCallback = callback;
 }
@@ -143,8 +142,8 @@ bool SmsClass::waitOk()
     while (now - start < 10000)
     {
         char* response = readLine();
-        
-        if (strcasecmp_P(response,OK) == 0)
+
+        if (strcasecmp_P(response, OK) == 0)
             return true;
 
         if (strcasecmp_P(response, ERROR) == 0)
@@ -191,7 +190,7 @@ char* SmsClass::getNumber(const char* str)
         {
             if (start)
             {
-                _number[index]='\0';
+                _number[index] = '\0';
                 return _number;
             }
             start = true;
@@ -222,8 +221,8 @@ bool SmsClass::isAdmin(char* number)
         for (auto i = 3; i < strlen(number); i++)
             _number[i - 2] = number[i];
     else return false;
-    
-    for (auto i = 0;i<sizeof(Settings.Current.Monitor[i]);i++)
+
+    for (auto i = 0; i < sizeof(Settings.Current.Monitor[i]); i++)
         if (strcmp(_number, Settings.Current.Monitor[i]) == 0) return true;
 
     return false;
@@ -247,17 +246,16 @@ void SmsClass::parseSMS(char* command)
 void SmsClass::parseData(char* command)
 {
     if (strlen(command) == 0) return;
-    char buff[10];
-    strcpy_P(buff,(char *)pgm_read_word(&CSQR));
-    if(startsWith(buff, command))
+
+    if (startsWith("+CSQ:", command))
     {
         processCSQ(command);
         return;
     }
-    strcpy_P(buff,(char *)pgm_read_word(&CREGR));
-    if (startsWith(buff, command))
+
+    if (startsWith("+CREG:", command))
     {
-        if(strcmp(command,"+CREG: 1")==0)
+        if (strcmp(command, "+CREG: 1") == 0)
             sms->println(F("AT+CREG?"));
         else
             _isRegistered = strcmp(command, "+CREG: 0,1") == 0 || strcmp(command, "+CREG: 1,1") == 0;

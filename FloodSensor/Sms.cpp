@@ -1,5 +1,4 @@
 #include "Sms.h"
-SoftwareSerial sms(11, 12);
 
 const char AT[]     PROGMEM = "AT\r";
 const char CREG1[]  PROGMEM = "AT+CREG=1\r";            // Network Registration
@@ -14,13 +13,18 @@ const char CREGR[]  PROGMEM = "+CREG:";
 
 const char* const COMMANDS[] PROGMEM = {AT,CREG1,CSMS,CNMI,CMGF,CSCS};
 
+SmsClass::SmsClass(uint8_t rx, uint8_t tx)
+{
+    sms = new SoftwareSerial(rx,tx);
+}
+
 void SmsClass::init()
 {
     if (_isReady) return;
 
     char cmd[10];
 
-    sms.begin(9600);
+    sms->begin(9600);
 
     while (!sms){}
 
@@ -31,7 +35,7 @@ void SmsClass::init()
         while (!ok)
         {
             delay(777);
-            sms.write(cmd);
+            sms->write(cmd);
             ok = waitOk();
         }
     }
@@ -39,7 +43,7 @@ void SmsClass::init()
     _isReady = true;
 
     delay(777);
-    sms.println(F("AT+CMGL=\"REC UNREAD\""));
+    sms->println(F("AT+CMGL=\"REC UNREAD\""));
 }
 
 char* SmsClass::readLine()
@@ -48,15 +52,15 @@ char* SmsClass::readLine()
     unsigned int count = 0;
     unsigned int timeout = 0;
 
-    while (sms.available() == 0 && timeout < 10000)
+    while (sms->available() == 0 && timeout < 10000)
     {
         delay(1);
         timeout++;
     }
 
-    while (sms.available() > 0)
+    while (sms->available() > 0)
     {
-        byte b = sms.read();
+        byte b = sms->read();
         if (b == 13)
         {
             data[count] = 0;
@@ -73,6 +77,7 @@ char* SmsClass::readLine()
     return data;
 }
 
+/// Returns the signal strength (0-4)
 uint8_t SmsClass::getSignal()
 {
     if(csq<7) return 0;
@@ -85,7 +90,7 @@ uint8_t SmsClass::getSignal()
 
 void SmsClass::update()
 {
-    if (sms.available())
+    if (sms->available())
         parseData(readLine());
 }
 
@@ -103,31 +108,31 @@ void SmsClass::onReceive(void (* callback)(char* number, char* message))
 
 char* SmsClass::getIMEI()
 {
-    sms.println(F("AT+GSN"));
+    sms->println(F("AT+GSN"));
     return readLine();
 }
 
 void SmsClass::startSend(char* number)
 {
-    sms.print(F("AT+CMGS=\""));
-    sms.print(number);
-    sms.print(F("\"\r"));
+    sms->print(F("AT+CMGS=\""));
+    sms->print(number);
+    sms->print(F("\"\r"));
     readLine();
 }
 
 void SmsClass::write(char* message)
 {
-    sms.write(message);
+    sms->write(message);
 }
 
 void SmsClass::write(char text)
 {
-    sms.write(text);
+    sms->write(text);
 }
 
 void SmsClass::commitSend()
 {
-    sms.write(0x26);
+    sms->write(0x26);
     waitOk();
 }
 
@@ -253,15 +258,13 @@ void SmsClass::parseData(char* command)
     if (startsWith(buff, command))
     {
         if(strcmp(command,"+CREG: 1")==0)
-            sms.println(F("AT+CREG?"));
+            sms->println(F("AT+CREG?"));
         else
             _isRegistered = strcmp(command, "+CREG: 0,1") == 0 || strcmp(command, "+CREG: 1,1") == 0;
     }
 
     if (startsWith("+CLIP:", command)) //Hangup call
-        sms.println(F("ATH"));
+        sms->println(F("ATH"));
     else if (startsWith("+CMT: ", command)) //New message
         parseSMS(command);
 }
-
-SmsClass Sms;

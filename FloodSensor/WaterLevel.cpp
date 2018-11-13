@@ -14,7 +14,7 @@ void WaterLevel::init(uint8_t level1, uint8_t level2, uint8_t level3, uint8_t le
     for (auto i : _levelPIN) pinMode(i, INPUT_PULLUP);
 }
 
-void WaterLevel::onLevelChange(void(* callback)(uint8_t level))
+void WaterLevel::onLevelChange(void(*callback)(uint8_t level))
 {
     onLevelChangeCallback = callback;
 }
@@ -40,7 +40,7 @@ void WaterLevel::update()
             _waterLevelChanged = millis();
             _prevWaterLevel = _currentLevel;
             _currentLevel = level;
-            if(onLevelChangeCallback) onLevelChangeCallback(level);
+            if (onLevelChangeCallback) onLevelChangeCallback(level);
         }
     }
 }

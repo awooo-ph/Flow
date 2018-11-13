@@ -47,7 +47,7 @@ void SmsClass::init()
 
 char* SmsClass::readLine()
 {
-    char data[74] = "\0";
+    char data[174] = "\0";
     unsigned int count = 0;
     unsigned int timeout = 0;
 
@@ -72,7 +72,7 @@ char* SmsClass::readLine()
         }
         delay(7);
     }
-
+    data[count] = 0;
     return data;
 }
 
@@ -114,7 +114,11 @@ char* SmsClass::getIMEI()
 void SmsClass::startSend(char* number)
 {
     sms->print(F("AT+CMGS=\""));
-    sms->print(number);
+    for(auto i=0;i<sizeof(number);i++)
+    {
+        if(number[i]=='\0') break;
+        sms->write(number[i]);
+    }
     sms->print(F("\"\r"));
     readLine();
 }
@@ -222,7 +226,7 @@ bool SmsClass::isAdmin(char* number)
             _number[i - 2] = number[i];
     else return false;
 
-    for (auto i = 0; i < sizeof(Settings.Current.Monitor[i]); i++)
+    for (auto i = 0; i < 4; i++)
         if (strcmp(_number, Settings.Current.Monitor[i]) == 0) return true;
 
     return false;

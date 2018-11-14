@@ -177,21 +177,22 @@ void SmsClass::commitSend()
     _smsSendStarted = false;
 }
 
+unsigned long waitStart = 0;
 bool SmsClass::waitOk()
 {
-    int start = millis();
-    int now = start;
-    while (now - start < 10000)
+    waitStart = millis();
+    while (millis() - waitStart < 4444)
     {
-        char* response = readLine();
+        char response[147];
+        readLine(response);
+        if (response && strlen(response) > 0) {
+            if (strcasecmp_P(response, OK) == 0)
+                return true;
 
-        if (strcasecmp_P(response, OK) == 0)
-            return true;
-
-        if (strcasecmp_P(response, ERROR) == 0)
-            return false;
-
-        now = millis();
+            auto res = strstr_P(ERROR, response);
+            if (res)
+                return false;
+        }
     }
     return false;
 }

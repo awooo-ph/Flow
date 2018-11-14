@@ -11,7 +11,9 @@ void WaterLevel::init(uint8_t level1, uint8_t level2, uint8_t level3, uint8_t le
     _levelPIN[2] = level3;
     _levelPIN[3] = level4;
     _levelPIN[4] = level5;
-    for (auto i : _levelPIN) pinMode(i, INPUT_PULLUP);
+    for (auto i : _levelPIN)
+        pinMode(i, INPUT_PULLUP);
+    
 }
 
 void WaterLevel::onLevelChange(void(*callback)(uint8_t level))
@@ -26,7 +28,7 @@ void WaterLevel::update()
     uint8_t level = 0;
 
     for (uint8_t i = 0; i < 4; i++)
-        if (digitalRead(_levelPIN[i])) level = i;
+        if (!digitalRead(_levelPIN[i])) level = i+1;
 
 
     if (_currentLevel != level)

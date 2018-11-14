@@ -93,7 +93,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\FloodSensor;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries\EEPROM\src;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries\SoftwareSerial\src;E:\Users\7\Documents\Arduino\libraries\TM1637;$(ProjectDir)..\..\..\program files (x86)\microsoft visual studio\2017\community\common7\ide\extensions\ktpce3c3.a4z\Micro Platforms\visualmicro\ide\libraries;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries;E:\Users\7\Documents\Arduino\libraries;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\cores\arduino;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\variants\standard;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\avr\include;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\avr\include\avr;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\lib\gcc\avr\4.8.1\include;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\lib\gcc\avr\4.9.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\FloodSensor;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries\EEPROM\src;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries\SoftwareSerial\src;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries\Wire\src;E:\Users\7\Documents\Arduino\libraries\LiquidCrystal_I2C;E:\Users\7\Documents\Arduino\libraries\I2C;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries\Wire\src\utility;$(ProjectDir)..\..\..\program files (x86)\microsoft visual studio\2017\community\common7\ide\extensions\ktpce3c3.a4z\Micro Platforms\visualmicro\ide\libraries;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\libraries;E:\Users\7\Documents\Arduino\libraries;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\cores\arduino;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\hardware\avr\1.6.23\variants\standard;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\avr\include;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\avr\include\avr;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\lib\gcc\avr\4.8.1\include;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\Users\7\AppData\Local\arduino15\packages\arduino\tools\avr-gcc\5.4.0-atmel3.6.1-arduino2\lib\gcc\avr\4.9.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ProjectDir)__vm\.FloodSensor.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <PreprocessorDefinitions>__AVR_ATmega328p__;__AVR_ATmega328P__;UNRESTRICTED;F_CPU=16000000L;ARDUINO=10801;ARDUINO_AVR_UNO;ARDUINO_ARCH_AVR;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -116,12 +116,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Display.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Sms.h" />
     <ClInclude Include="WaterLevel.h" />
     <ClInclude Include="__vm\.FloodSensor.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Display.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Sms.cpp" />
     <ClCompile Include="WaterLevel.cpp" />

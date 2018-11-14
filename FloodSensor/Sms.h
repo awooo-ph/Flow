@@ -14,12 +14,12 @@
 class SmsClass
 {
 private:
-    SoftwareSerial* sms;
+    SoftwareSerial * sms;
     bool _isReady = false;
     bool _isRegistered = false;
     long _lastCREG = 0;
     bool waitOk();
-    char * readLine();
+    void readLine(char data[]);
     uint8_t csq = 0;
     void processCSQ(char command[]);
     void parseData(char * data);
@@ -27,11 +27,14 @@ private:
     bool startsWith(const char *pre, const char *str);
     void parseSMS(char* command);
     bool isAdmin(char * number);
+    uint8_t errorCode=0;
+    bool _smsSendStarted = false;
     void(*onReceiveCallback)(char* number, char* message) = nullptr;
 
 public:
     SmsClass(uint8_t rx, uint8_t tx);
-    void init();
+    uint8_t getError(){return errorCode;}
+    bool init();
     bool isReady() { return _isReady; }
     bool isRegistered() { return _isRegistered; }
     uint8_t getRSSI() { return csq; }

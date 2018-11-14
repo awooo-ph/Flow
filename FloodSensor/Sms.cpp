@@ -45,13 +45,12 @@ void SmsClass::init()
     sms->println(F("AT+CMGL=\"REC UNREAD\""));
 }
 
-char* SmsClass::readLine()
+void SmsClass::readLine(char data[])
 {
-    char data[174] = "\0";
     unsigned int count = 0;
     unsigned int timeout = 0;
 
-    while (sms->available() == 0 && timeout < 10000)
+    while (sms->available() == 0 && timeout < 1111)
     {
         delay(1);
         timeout++;
@@ -60,7 +59,16 @@ char* SmsClass::readLine()
     while (sms->available() > 0)
     {
         byte b = sms->read();
-        if (b == 13)
+        Serial.write(b);
+          if (b == '\n' || b=='\r') {
+            data[count] = '\0';
+            return;
+          }
+          
+            data[count] = b;
+            count++;
+
+        /*if (b == 13)
         {
             data[count] = 0;
             return data;
@@ -69,11 +77,10 @@ char* SmsClass::readLine()
         {
             data[count] = b;
             count++;
-        }
+        }*/
         delay(7);
     }
     data[count] = 0;
-    return data;
 }
 
 /// Returns the signal strength (0-4)

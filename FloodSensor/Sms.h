@@ -20,16 +20,19 @@ private:
     long _lastCREG = 0;
     bool waitOk();
     void readLine(char data[]);
-    uint8_t csq = 0;
+    int csq = 0;
     void processCSQ(char command[]);
     void parseData(char * data);
-    char * getNumber(const char * data);
+    char * parseNumber(const char * data);
     bool startsWith(const char *pre, const char *str);
     void parseSMS(char* command);
     bool isAdmin(char * number);
     uint8_t errorCode = 0;
     bool _smsSendStarted = false;
     void(*onReceiveCallback)(char* number, char* message) = nullptr;
+    unsigned long _lastCSQ=0;
+    unsigned long _lastCNUM=0;
+    void parseCNUM(char * data);
 
 public:
     SmsClass(uint8_t rx, uint8_t tx);
@@ -37,16 +40,20 @@ public:
     bool init();
     bool isReady() { return _isReady; }
     bool isRegistered() { return _isRegistered; }
-    uint8_t getRSSI() { return csq; }
-    uint8_t getSignal();
+    int getRSSI() { return csq; }
+    int getSignal();
     void update();
-    void send(char * message, char * number);
+    void send(char * number,char * message);
     void onReceive(void(*callback)(char * number, char * message));
     char * getIMEI();
-    void startSend(char * number);
-    void write(char * message);
-    void write(char text);
-    void commitSend();
+    bool startSend(char * number);
+    bool write(char * message);
+    bool write(char text);
+    bool commitSend();
+    void cancelSend();
+    void restart();
+    void getNumber(char num[]);
+    void readUnread();
 
 };
 

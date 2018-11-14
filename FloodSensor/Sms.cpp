@@ -71,13 +71,13 @@ void SmsClass::readLine(char data[])
     {
         byte b = sms->read();
         Serial.write(b);
-          if (b == '\n' || b=='\r') {
+        if (b == '\n' || b == '\r') {
             data[count] = '\0';
             return;
-          }
-          
-            data[count] = b;
-            count++;
+        }
+
+        data[count] = b;
+        count++;
 
         /*if (b == 13)
         {

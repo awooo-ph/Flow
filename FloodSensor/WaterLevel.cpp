@@ -13,7 +13,6 @@ void WaterLevel::init(uint8_t level1, uint8_t level2, uint8_t level3, uint8_t le
     _levelPIN[4] = level5;
     for (auto i : _levelPIN)
         pinMode(i, INPUT_PULLUP);
-    
 }
 
 void WaterLevel::onLevelChange(void(*callback)(uint8_t level))
@@ -23,26 +22,20 @@ void WaterLevel::onLevelChange(void(*callback)(uint8_t level))
 
 void WaterLevel::update()
 {
-    if (millis() - _lastLevelCheck < 4444) return;
+    //if (millis() - _lastLevelCheck < 4444) return;
 
     uint8_t level = 0;
 
-    for (uint8_t i = 0; i < 4; i++)
-        if (!digitalRead(_levelPIN[i])) level = i+1;
-
-
-    if (_currentLevel != level)
+    for (uint8_t i = 0; i < 5; i++)
     {
-        if (millis() - _waterLevelChanged < 7777)
-        {
-            _currentLevel = _prevWaterLevel;
-        }
-        else
-        {
-            _waterLevelChanged = millis();
-            _prevWaterLevel = _currentLevel;
-            _currentLevel = level;
-            if (onLevelChangeCallback) onLevelChangeCallback(level);
-        }
+        auto pin = digitalRead(_levelPIN[i]);
+        if (pin) level = i+1;
+    }
+    
+    if (_currentLevel != level && millis() - _waterLevelChanged > 7777)
+    {
+        _waterLevelChanged = millis();
+        _currentLevel = level;
+        if (onLevelChangeCallback) onLevelChangeCallback(level);        
     }
 }

@@ -21,6 +21,7 @@ bool SmsClass::init()
 {
     if (_isReady) return;
 
+    Serial.println(F("\nInitializing GSM modem..."));
 
     char cmd[47];
 
@@ -35,6 +36,7 @@ bool SmsClass::init()
         bool ok = false;
         while (!ok)
         {
+            Serial.print(cmd);
             delay(777);
             sms->write(cmd);
             ok = waitOk();
@@ -49,6 +51,8 @@ bool SmsClass::init()
     }
 
     _isReady = true;
+
+    Serial.println(F("\nModem initialization complete"));
 
     delay(777);
     sms->println(F("AT+CMGL=\"REC UNREAD\""));
@@ -113,11 +117,15 @@ void SmsClass::update()
         readLine(data);
         parseData(data);
     }
+    while (Serial.available())
+        sms->write(Serial.read());
 }
 
 void SmsClass::send(char* number, char* text)
 {
     if (!number || strlen(number) == 0 || !text || strlen(text) == 0) return;
+    Serial.println(F("\nSending message to: "));
+    Serial.println(number);
     startSend(number);
     write(text);
     commitSend();
@@ -162,7 +170,11 @@ void SmsClass::write(char text)
 void SmsClass::commitSend()
 {
     sms->write(0x26);
-    waitOk();
+    if (waitOk())
+        Serial.println(F("\nMessage Sent!"));
+    else
+        Serial.println(F("\nMessage sending failed!"));
+    _smsSendStarted = false;
 }
 
 bool SmsClass::waitOk()

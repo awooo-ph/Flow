@@ -108,11 +108,16 @@ uint8_t SmsClass::getSignal()
 void SmsClass::update()
 {
     if (sms->available())
-        parseData(readLine());
+    {
+        char data[147];
+        readLine(data);
+        parseData(data);
+    }
 }
 
 void SmsClass::send(char* number, char* text)
 {
+    if (!number || strlen(number) == 0 || !text || strlen(text) == 0) return;
     startSend(number);
     write(text);
     commitSend();
@@ -126,7 +131,9 @@ void SmsClass::onReceive(void(*callback)(char* number, char* message))
 char* SmsClass::getIMEI()
 {
     sms->println(F("AT+GSN"));
-    return readLine();
+    char data[47];
+    readLine(data);
+    return data;
 }
 
 void SmsClass::startSend(char* number)
@@ -138,7 +145,8 @@ void SmsClass::startSend(char* number)
         sms->write(number[i]);
     }
     sms->print(F("\"\r"));
-    readLine();
+    char data[47];
+    readLine(data);
 }
 
 void SmsClass::write(char* message)
@@ -260,7 +268,8 @@ void SmsClass::parseSMS(char* command)
     if (!isAdmin(number)) return;
 #endif
 
-    char* msg = readLine();
+    char msg[147];
+    readLine(msg);
 
     if (onReceiveCallback) onReceiveCallback(number, msg);
 }

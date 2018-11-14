@@ -23,6 +23,7 @@ private:
     void init(uint8_t level1, uint8_t level2, uint8_t level3, uint8_t level4, uint8_t level5);
     void onLevelChange(void (*onLevelChangeCallback)(uint8_t level));
     void update();
+    uint8_t getLevel() {return _currentLevel;}
 };
 
 #endif

@@ -12,6 +12,40 @@ const char ERROR[]  PROGMEM = "ERROR";
 
 const char* const COMMANDS[] PROGMEM = { AT,CPIN, CREG1,CSMS,CNMI,CMGF,CSCS };
 
+char ownNumber[20];
+
+void SmsClass::parseCNUM(char* data)
+{
+    bool comma=false;
+    bool start = false;
+    int index = 0;
+    int len=strlen(data);
+    Serial.print("CNUM: len=");
+    Serial.println(len);
+    for(auto i=7;i<len,i++;)
+    {
+        if(comma && start && data[i]!='"')
+        {
+            ownNumber[index]=data[i];
+            index++;
+        }
+        else
+        {
+            if(data[i]==',') comma = true;
+            if(data[i]=='"')
+            {
+                if(start){
+                    ownNumber[index]=0;
+                    return;
+                }
+                else if(comma) start = true;
+                
+            }
+            
+        }
+    }
+}
+
 SmsClass::SmsClass(uint8_t rx, uint8_t tx)
 {
     sms = new SoftwareSerial(rx, tx);
@@ -36,7 +70,8 @@ bool SmsClass::init()
         bool ok = false;
         while (!ok)
         {
-            Serial.print(cmd);
+            //Serial.println();
+            //Serial.print(cmd);
             delay(777);
             sms->write(cmd);
             ok = waitOk();
@@ -52,11 +87,7 @@ bool SmsClass::init()
 
     _isReady = true;
 
-    Serial.println(F("\nModem initialization complete"));
-
-    delay(777);
-    sms->println(F("AT+CMGL=\"REC UNREAD\""));
-
+    Serial.println(F("\nModem initialization complete"));   
     return true;
 }
 
@@ -99,13 +130,21 @@ void SmsClass::readLine(char data[])
 }
 
 /// Returns the signal strength (0-4)
-uint8_t SmsClass::getSignal()
+int SmsClass::getSignal()
 {
+    if(_isReady) return -1;
+    if(millis()-_lastCSQ>7777)
+    {
+        _lastCSQ = millis();
+        sms->println("AT+CSQ");    
+    }
+    
+    if (csq == 99 || csq==0) return -1;
     if (csq < 7) return 0;
     if (csq < 10) return 1;
     if (csq < 15) return 2;
-    if (csq < 19) return 3;
-    if (csq == 99) return 0;
+    if (csq < 20) return 3;
+    
     return 4;
 }
 
@@ -124,6 +163,9 @@ void SmsClass::update()
 void SmsClass::send(char* number, char* text)
 {
     if (!number || strlen(number) == 0 || !text || strlen(text) == 0) return;
+    if (!number || strlen(number) < 7) return;
+    if(!(number[0]=='0' || number[0]=='+')) return;
+
     Serial.println(F("\nSending message to: "));
     Serial.println(number);
     startSend(number);
@@ -144,10 +186,12 @@ char* SmsClass::getIMEI()
     return data;
 }
 
-void SmsClass::startSend(char* number)
+bool SmsClass::startSend(char* number)
 {
-    if (!number || strlen(number) == 0) return;
-    if (_smsSendStarted) return;
+    if(!_isReady) return false;
+    if (!number || strlen(number) < 7) return false;
+    if(!(number[0]=='0' || number[0]=='+')) return false;
+    if (_smsSendStarted) return false;
     _smsSendStarted = true;
     sms->print(F("AT+CMGS=\""));
     for (auto i = 0; i < sizeof(number); i++)
@@ -158,29 +202,66 @@ void SmsClass::startSend(char* number)
     sms->print(F("\"\r"));
     char data[47];
     readLine(data);
+    return true;
 }
 
-void SmsClass::write(char* message)
+bool SmsClass::write(char* message)
 {
-    if (!_smsSendStarted) return;
+    if (!_smsSendStarted) return false;
     sms->write(message);
+    return true;
 }
 
-void SmsClass::write(char text)
+bool SmsClass::write(char text)
 {
-    if (!_smsSendStarted) return;
+    if (!_smsSendStarted) return false;
     sms->write(text);
+    return true;
 }
 
-void SmsClass::commitSend()
+bool SmsClass::commitSend()
 {
-    if (!_smsSendStarted) return;
+    if (!_smsSendStarted) return false;
     sms->write(0x26);
     if (waitOk())
         Serial.println(F("\nMessage Sent!"));
     else
         Serial.println(F("\nMessage sending failed!"));
     _smsSendStarted = false;
+    return true;
+}
+
+void SmsClass::cancelSend()
+{
+    if(!_smsSendStarted) return;
+    sms->println("777");
+    sms->println("777");
+    sms->write(0x03);
+}
+
+void SmsClass::restart()
+{
+
+}
+
+
+void SmsClass::getNumber(char num[])
+{
+    if(!_isReady) return;
+    if(strlen(ownNumber)==0 && millis()-_lastCNUM>7777)
+    {
+        _lastCNUM = millis();
+        sms->println(F("AT+CNUM"));
+    } else
+    {
+        strcpy(num,ownNumber);    
+    }
+}
+
+
+void SmsClass::readUnread()
+{
+    sms->println(F("AT+CMGL=\"REC UNREAD\""));sms->println(F("AT+CMGL=\"REC UNREAD\""));
 }
 
 unsigned long waitStart = 0;
@@ -223,7 +304,7 @@ bool SmsClass::startsWith(const char* pre, const char* str)
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-char* SmsClass::getNumber(const char* str)
+char* SmsClass::parseNumber(const char* str)
 {
     char _number[12];
 
@@ -281,7 +362,7 @@ bool SmsClass::isAdmin(char* number)
 
 void SmsClass::parseSMS(char* command)
 {
-    char* number = getNumber(command);
+    char * number=parseNumber(command);
 
 #ifndef UNRESTRICTED
     if (!isAdmin(number)) return;
@@ -300,6 +381,12 @@ void SmsClass::parseData(char* command)
     if (startsWith("+CSQ:", command))
     {
         processCSQ(command);
+        return;
+    }
+
+    if(startsWith("+CNUM:",command))
+    {
+        parseCNUM(command);
         return;
     }
 

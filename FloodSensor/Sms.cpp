@@ -146,10 +146,13 @@ char* SmsClass::getIMEI()
 
 void SmsClass::startSend(char* number)
 {
+    if (!number || strlen(number) == 0) return;
+    if (_smsSendStarted) return;
+    _smsSendStarted = true;
     sms->print(F("AT+CMGS=\""));
-    for(auto i=0;i<sizeof(number);i++)
+    for (auto i = 0; i < sizeof(number); i++)
     {
-        if(number[i]=='\0') break;
+        if (number[i] == '\0') break;
         sms->write(number[i]);
     }
     sms->print(F("\"\r"));
@@ -159,16 +162,19 @@ void SmsClass::startSend(char* number)
 
 void SmsClass::write(char* message)
 {
+    if (!_smsSendStarted) return;
     sms->write(message);
 }
 
 void SmsClass::write(char text)
 {
+    if (!_smsSendStarted) return;
     sms->write(text);
 }
 
 void SmsClass::commitSend()
 {
+    if (!_smsSendStarted) return;
     sms->write(0x26);
     if (waitOk())
         Serial.println(F("\nMessage Sent!"));

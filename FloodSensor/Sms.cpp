@@ -198,8 +198,8 @@ bool SmsClass::waitOk()
 
 void SmsClass::processCSQ(char command[])
 {
-    char c[sizeof(command)];
-    for (auto x = 5; x < sizeof(command); x++)
+    char c[20];
+    for (auto x = 5; x < strlen(command); x++)
     {
         if (command[x] == ',')
         {

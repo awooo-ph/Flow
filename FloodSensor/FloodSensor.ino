@@ -1,6 +1,8 @@
+#include <Arduino.h>
 #include "Settings.h"
 #include "Sms.h"
 #include  "WaterLevel.h"
+#include <TM1637Display.h>
 
 #define VERSION "1.0.0"
 #define SIREN_POWER 7
@@ -11,19 +13,39 @@
 WaterLevel river;
 SmsClass Sms(GSM_RX,GSM_TX);
 
-uint8_t _prevWaterLevel = 0;
 uint8_t SirenPIN[3] = { 4,5,6 };
-uint8_t SignalPIN[SIGNAL_BARS] = { 8,9,10,11 };
+
+const uint8_t LED_R = SEG_E | SEG_G;
+const uint8_t LED_A = LED_R | SEG_A | SEG_F | SEG_B | SEG_C;
+const uint8_t LED_L = SEG_F | SEG_E | SEG_D;
+const uint8_t LED_C = LED_L | SEG_A;
+const uint8_t LED_o = SEG_C | SEG_D | SEG_E | SEG_G;
+const uint8_t LED_d = LED_o | SEG_B;
+const uint8_t LED_E = LED_C | SEG_G;
+const uint8_t LED_N = LED_R | SEG_C;
+const uint8_t LED_S = SEG_A | SEG_F | SEG_G | SEG_C | SEG_D;
+const uint8_t LED_i = SEG_E;
+const uint8_t LED_G = LED_C | SEG_C;
+
+uint8_t LED_ERROR[] = {LED_E,LED_R,LED_R,0};
+const uint8_t LED_GOOD[] = {LED_G,LED_o,LED_o,LED_d};
+const uint8_t LED_LOAD[] = {LED_L,LED_o,LED_A,LED_d};
+const uint8_t LED_CARD[] = {LED_C,LED_A,LED_R,LED_d};
+const uint8_t LED_BLANK[] = {0,0,0,0};
+const uint8_t LED_NO[] = {0,LED_N,LED_o,0};
+
+TM1637Display display(8, 9);
 
 void OnWaterLevelChanged(uint8_t level)
 {
+    
     digitalWrite(SIREN_POWER, HIGH);
     delay(777);
 
     for (auto i = 0; i < 3; i++)
     {
         auto pin = SirenPIN[i];
-        if (Settings.Current.SirenLevel[i] == level+1)
+        if (Settings.Current.SirenLevel[i] == level)
         {
             digitalWrite(SIREN_POWER, LOW);
             delay(777);
@@ -35,14 +57,16 @@ void OnWaterLevelChanged(uint8_t level)
         }
     }
 
-    if (Settings.Current.NotifyLevel[level])
+    if (Settings.Current.NotifyLevel[level-1])
     {
         char * msg = ".0";
         sprintf(msg, ".%d", level);
         for (auto number : Settings.Current.Monitor)
+        {
             Sms.send(msg, number);
+        }
         for (auto number : Settings.Current.NotifyNumbers)
-            Sms.send(Settings.Current.LevelMessage[level], number);
+            Sms.send(Settings.Current.LevelMessage[level-1], number);
     }
 }
 
@@ -87,7 +111,8 @@ void onReceive(char* number, char* message)
             for(auto i=0;i<3;i++)
                 Settings.Current.SirenLevel[i] = message[i+7];
             break;
-        
+        case '$':
+            break;
         default: ;
         }
 
@@ -97,12 +122,42 @@ void onReceive(char* number, char* message)
     }
 }
 
+bool showSignal = true;
+bool displayOff = true;
+unsigned long lastDisplayUpdate = 0;
+uint8_t displayCount = 0;
+
+void updateDisplay()
+{
+    if(millis()-lastDisplayUpdate<1111) return;
+    lastDisplayUpdate = millis();
+    uint8_t data[4] = {0,0,0,0};
+    if(displayOff)
+    {
+        if(showSignal)
+        {
+            data[0] = LED_L;
+            data[3] = display.encodeDigit(river.getLevel());
+        } else
+        {
+            data[0] = LED_S;
+            data[3] = display.encodeDigit(Sms.getSignal());
+        }
+        displayCount++;
+        if(displayCount==7)
+        {
+            showSignal = !showSignal;
+            displayCount = 0;
+        }
+    }
+    displayOff = !displayOff;
+    display.setSegments(data);
+}
+
 void setup() {
+    Serial.begin(9600);
     pinMode(SIREN_POWER, OUTPUT);
     digitalWrite(SIREN_POWER, HIGH);
-
-    river.onLevelChange(OnWaterLevelChanged);
-    river.init(A0, A1, A2, A3, A6);
 
     for (auto i : SirenPIN)
     {
@@ -111,9 +166,47 @@ void setup() {
     }
 
     Settings.LoadConfig();
+
+    //for (auto pin:SignalPIN)
+    //    pinMode(pin,OUTPUT);
+
+    display.setBrightness(0x0f);
     
     Sms.onReceive(onReceive);
-    Sms.init();
+    bool init = false;
+    while(!init)
+    {
+        display.setSegments(LED_LOAD);
+        delay(1111);
+        init = Sms.init();
+        if(!init)
+        {
+            for(auto i=0;i<17;i++){
+                LED_ERROR[3] = display.encodeDigit(Sms.getError()+1);
+                display.setSegments(LED_ERROR);
+                delay(1111);
+                display.setSegments(LED_BLANK);
+                delay(777);
+                if(Sms.getError()==1)
+                {
+                    display.setSegments(LED_NO);
+                    delay(1111);
+                    display.setSegments(LED_BLANK);
+                    delay(777);
+                    display.setSegments(LED_CARD);
+                    delay(1111);
+                    display.setSegments(LED_BLANK);
+                    delay(777);
+                }
+            }
+        }
+    }
+    display.setSegments(LED_GOOD);
+    delay(4444);
+
+    river.onLevelChange(OnWaterLevelChanged);
+    river.init(A0, A1, A2, A3, A6);
+
 }
 
 // the loop function runs over and over again until power down or reset
@@ -122,7 +215,9 @@ void loop() {
     Sms.update();
 
     // Signal LED
-    for (auto i = 0; i < SIGNAL_BARS; i++)
-        digitalWrite(SignalPIN[i], Sms.getSignal() > i);
+    //for (auto i = 0; i < SIGNAL_BARS; i++)
+    //    digitalWrite(SignalPIN[i], Sms.getSignal() > i);
+
+    updateDisplay();
 
 }

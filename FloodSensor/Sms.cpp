@@ -299,7 +299,7 @@ void SmsClass::parseData(char* command)
     if (startsWith("+CREG:", command))
     {
         if (strcmp(command, "+CREG: 1") == 0)
-            sms->println(F("AT+CREG?"));
+            sms->println(F("AT+CSQ"));
         else
             _isRegistered = strcmp(command, "+CREG: 0,1") == 0 || strcmp(command, "+CREG: 1,1") == 0;
     }

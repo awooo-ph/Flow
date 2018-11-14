@@ -27,13 +27,13 @@ private:
     bool startsWith(const char *pre, const char *str);
     void parseSMS(char* command);
     bool isAdmin(char * number);
-    uint8_t errorCode=0;
+    uint8_t errorCode = 0;
     bool _smsSendStarted = false;
     void(*onReceiveCallback)(char* number, char* message) = nullptr;
 
 public:
     SmsClass(uint8_t rx, uint8_t tx);
-    uint8_t getError(){return errorCode;}
+    uint8_t getError() { return errorCode; }
     bool init();
     bool isReady() { return _isReady; }
     bool isRegistered() { return _isRegistered; }

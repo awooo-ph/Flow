@@ -1,6 +1,7 @@
 #include "Sms.h"
 
 const char AT[]     PROGMEM = "AT\r";
+const char CPIN[]   PROGMEM = "AT+CPIN?\r";
 const char CREG1[]  PROGMEM = "AT+CREG=1\r";            // Network Registration
 const char CSMS[]   PROGMEM = "AT+CSMS=1\r";            // Select Message Service
 const char CNMI[]   PROGMEM = "AT+CNMI=2,2,0,0,0\r";    // New Message Indication
@@ -9,40 +10,50 @@ const char CSCS[]   PROGMEM = "AT+CSCS=\"GSM\"\r";      // Select Character Set
 const char OK[]     PROGMEM = "OK";
 const char ERROR[]  PROGMEM = "ERROR";
 
-const char* const COMMANDS[] PROGMEM = { AT,CREG1,CSMS,CNMI,CMGF,CSCS };
-
+const char* const COMMANDS[] PROGMEM = { AT,CPIN, CREG1,CSMS,CNMI,CMGF,CSCS };
 
 SmsClass::SmsClass(uint8_t rx, uint8_t tx)
 {
     sms = new SoftwareSerial(rx, tx);
 }
 
-void SmsClass::init()
+bool SmsClass::init()
 {
     if (_isReady) return;
 
-    char cmd[10];
+
+    char cmd[47];
 
     sms->begin(9600);
 
     while (!sms) {}
 
-    for (auto i = 1; i < 7; i++)
+    for (auto i = 0; i < 7; i++)
     {
+        strcpy_P(cmd, (char*)pgm_read_word(&(COMMANDS[i])));
+        uint8_t tries = 0;
         bool ok = false;
-        strcpy_P(cmd, (char*)pgm_read_word(&(COMMANDS[i - 1])));
         while (!ok)
         {
             delay(777);
             sms->write(cmd);
             ok = waitOk();
+            tries++;
+            if (!ok && (tries >= 4 || i == 1))
+            {
+                errorCode = i;
+                return false;
+            }
         }
+
     }
 
     _isReady = true;
 
     delay(777);
     sms->println(F("AT+CMGL=\"REC UNREAD\""));
+
+    return true;
 }
 
 void SmsClass::readLine(char data[])

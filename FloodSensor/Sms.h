@@ -10,6 +10,7 @@
 #endif
 
 #include <SoftwareSerial.h>
+#include "Settings.h"
 
 class SmsClass
 {
@@ -54,6 +55,7 @@ public:
     void restart();
     void getNumber(char num[]);
     void readUnread();
+    void sendWarning(uint8_t);
 
 };
 

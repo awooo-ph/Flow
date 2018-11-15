@@ -14,11 +14,11 @@
 
 struct Config
 {
+    unsigned int LevelTimeout = 7777;
     byte SirenLevel[3] = { 1,2,3 };
     bool NotifyLevel[5] = { true,true,true,true,true };
     char * Monitor[4];
-    char * NotifyNumbers[7];
-    char * LevelMessage[5];
+    char * NotifyNumbers[17];
     char * SensorName;
     unsigned int checksum;
 };

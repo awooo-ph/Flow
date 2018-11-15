@@ -234,8 +234,8 @@ bool SmsClass::commitSend()
 void SmsClass::cancelSend()
 {
     if(!_smsSendStarted) return;
-    sms->println("777");
-    sms->println("777");
+    sms->println(F("777"));
+    sms->println(F("777"));
     sms->write(0x03);
 }
 
@@ -261,7 +261,21 @@ void SmsClass::getNumber(char num[])
 
 void SmsClass::readUnread()
 {
-    sms->println(F("AT+CMGL=\"REC UNREAD\""));sms->println(F("AT+CMGL=\"REC UNREAD\""));
+    sms->println(F("AT+CMGL=\"REC UNREAD\""));
+}
+
+void SmsClass::sendWarning(uint8_t level)
+{
+    for (auto number : Settings.Current.NotifyNumbers){
+        startSend(number);
+        sms->print(F("WARNING! Water level at "));
+        sms->print(Settings.Current.SensorName);
+        sms->print(F(" has reached to LEVEL "));
+        sms->print(level);
+        sms->print(F("."));
+        commitSend();
+        delay(777);
+    }
 }
 
 unsigned long waitStart = 0;

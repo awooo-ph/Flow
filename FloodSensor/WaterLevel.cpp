@@ -38,7 +38,7 @@ void WaterLevel::update()
         _newWaterLevel = level;
     } else
     {
-        if(_currentLevel!=_newWaterLevel && millis() - _waterLevelChanged > 7777)
+        if(_currentLevel!=_newWaterLevel && millis() - _waterLevelChanged > Settings.Current.LevelTimeout)
         {
             _currentLevel = _newWaterLevel;
             if (onLevelChangeCallback) onLevelChangeCallback(level);

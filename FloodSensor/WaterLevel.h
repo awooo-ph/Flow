@@ -9,6 +9,8 @@
 	#include "WProgram.h"
 #endif
 
+#include "Settings.h"
+
 class WaterLevel
 {
 private:

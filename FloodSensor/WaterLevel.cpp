@@ -31,11 +31,18 @@ void WaterLevel::update()
         auto pin = digitalRead(_levelPIN[i]);
         if (pin) level = i+1;
     }
-    
-    if (_currentLevel != level && millis() - _waterLevelChanged > 7777)
+
+    if(_newWaterLevel!=level)
     {
         _waterLevelChanged = millis();
-        _currentLevel = level;
-        if (onLevelChangeCallback) onLevelChangeCallback(level);        
+        _newWaterLevel = level;
+    } else
+    {
+        if(_currentLevel!=_newWaterLevel && millis() - _waterLevelChanged > 7777)
+        {
+            _currentLevel = _newWaterLevel;
+            if (onLevelChangeCallback) onLevelChangeCallback(level);
+        }
     }
+
 }

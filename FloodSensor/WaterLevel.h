@@ -14,7 +14,7 @@ class WaterLevel
 private:
     void (*onLevelChangeCallback)(uint8_t level) = nullptr;
     uint8_t _currentLevel = 0;
-    uint8_t _prevWaterLevel = 0;
+    uint8_t _newWaterLevel = 0;
     uint8_t _levelPIN[5] = { A0,A1,A2,A3,A6 };
     unsigned long _lastLevelCheck = 0;
     unsigned long _waterLevelChanged = 0;

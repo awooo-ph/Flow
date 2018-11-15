@@ -35,9 +35,9 @@ void DisplayClass::showWelcome(char * version)
 void DisplayClass::showLoading()
 {
     lcd->setCursor(0,0);
-    lcd->print(F("TURNING MODEM ON"));
+    lcd->print(F("STARTING MODEM"));
     lcd->setCursor(0,1);
-    lcd->print(F(" PLEASE WAIT... "));
+    lcd->print(F("PLEASE WAIT... "));
     delay(1111);
 }
 

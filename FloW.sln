@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.28010.2050
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FloodSensor", "FloodSensor\FloodSensor.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FloodMonitor", "FloodMonitor\FloodMonitor.csproj", "{0E37D417-4627-465C-85BC-A983E9D8C2B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flow", "FloodMonitor\Flow.csproj", "{0E37D417-4627-465C-85BC-A983E9D8C2B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

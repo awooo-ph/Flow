@@ -5,8 +5,247 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FloodMonitor"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        Icon="/icon2.ico"
+        xmlns:lv="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewModels="clr-namespace:FloodMonitor.ViewModels"
+        xmlns:converters="clr-namespace:FloodMonitor.Converters"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        WindowStartupLocation="CenterScreen"
+        Title="Flood Warning System" Height="450" Width="800">
+  <md:DialogHost Identifier="Root">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="333"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+
+    <Image Source="/logo.png" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+           VerticalAlignment="Center" HorizontalAlignment="Center"
+           Margin="14 4" />
+    <Rectangle Height="1" Fill="{DynamicResource MaterialDesignDivider}" VerticalAlignment="Bottom"
+               SnapsToDevicePixels="True"
+               UseLayoutRounding="True"/>
+
+    <Grid Grid.Row="1"
+          Grid.Column="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <Expander>
+        <Expander.Header>
+        <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+            <Grid Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=IsBooting,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
+              <StackPanel Orientation="Horizontal"
+                          Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=HasSIM,Converter={converters:BooleanToVisibility}}"
+                          Grid.Column="1">
+                <md:Transitioner SelectedIndex="{Binding Source={x:Static viewModels:Modem.Instance},Path=Signal}">
+                  <md:Transitioner.ItemContainerStyle>
+                    <Style TargetType="md:TransitionerSlide">
+                      <Setter Property="ForwardWipe">
+                        <Setter.Value>
+                        <md:FadeWipe/>
+                        </Setter.Value>
+                      </Setter>
+                      <Setter Property="BackwardWipe">
+                        <Setter.Value>
+                          <md:FadeWipe/>
+                        </Setter.Value>
+                      </Setter>
+                    </Style>
+                  </md:Transitioner.ItemContainerStyle>
+                  <md:TransitionerSlide Background="{DynamicResource MaterialDesignPaper}"
+                                        ToolTip="Cannot connect to GSM network">
+                    <md:PackIcon Kind="SignalOff"/>
+                  </md:TransitionerSlide>
+                  <md:TransitionerSlide Background="{DynamicResource MaterialDesignPaper}"
+                                        ToolTip="Poor">
+                    <md:PackIcon Kind="SignalCellular0"/>
+                  </md:TransitionerSlide>
+                  <md:TransitionerSlide Background="{DynamicResource MaterialDesignPaper}"
+                                        ToolTip="Good">
+                    <md:PackIcon Kind="SignalCellular1"/>
+                  </md:TransitionerSlide>
+                  <md:TransitionerSlide Background="{DynamicResource MaterialDesignPaper}"
+                                        ToolTip="Very Good">
+                    <md:PackIcon Kind="SignalCellular2" />
+                  </md:TransitionerSlide>
+                  <md:TransitionerSlide Background="{DynamicResource MaterialDesignPaper}"
+                                        ToolTip="Excellent">
+                    <md:PackIcon Kind="SignalCellular3" />
+                  </md:TransitionerSlide>
+                </md:Transitioner>
+
+                <TextBlock Text="{Binding Source={x:Static viewModels:Modem.Instance},Path=Operator}"
+                           ToolTip="Network"
+                           Margin="2 0 10 0" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Source={x:Static viewModels:Modem.Instance},Path=Number}"
+                           ToolTip="Modem's Number"
+                           Margin="4 0 0 0" VerticalAlignment="Center"/>
+              </StackPanel>
+              <TextBlock Text="SIM NOT DETECTED"
+                         Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=HasSIM,Converter={converters:BooleanToVisibility Collapsed,Visible}}"/>
+            </Grid>
+          
+            <ProgressBar Style="{DynamicResource MaterialDesignCircularProgressBar}"
+                         Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=IsBooting,Converter={converters:BooleanToVisibility}}"
+                         IsIndeterminate="True"/>
+          </Grid>
+        </Expander.Header>
+        <StackPanel>
+          <Grid Margin="20 0 20 10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+              <TextBlock Text="MODEM PORT" VerticalAlignment="Center"
+                         Style="{DynamicResource MaterialDesignTitleTextBlock}"/>
+              <TextBlock Text="COM Port the GSM Modem is connected to."
+                         Opacity="0.7"
+                         TextWrapping="Wrap"/>
+            </StackPanel>
+            <ComboBox ItemsSource="{Binding Source={x:Static viewModels:Modem.Instance},Path=AllPorts}"
+                      IsEditable="True"
+                      Grid.Column="2"
+                      Margin="10 0 0 0"
+                      md:HintAssist.Hint="EX: COM7"
+                      md:HintAssist.IsFloating="False"
+                      VerticalAlignment="Top"
+                      Text="{Binding Source={x:Static local:Config.Default},Path=ComPort}"/>
+          </Grid>
+        </StackPanel>
+      </Expander>
+      <Rectangle Height="1" Fill="{DynamicResource MaterialDesignDivider}" VerticalAlignment="Bottom"
+                 SnapsToDevicePixels="True"
+                 UseLayoutRounding="True"/>
+      <ListBox Grid.Row="1"
+               x:Name="ModemLog"
+               Focusable="False"
+               Padding="0"
+               ItemsSource="{Binding Source={x:Static viewModels:Modem.Instance},Path=Log}">
+        <ListBox.ItemContainerStyle>
+          <Style BasedOn="{StaticResource MaterialDesignListBoxItem}" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+          </Style>
+        </ListBox.ItemContainerStyle>
+        <ListBox.ItemTemplate>
+          <DataTemplate DataType="{x:Type viewModels:ModemLog}">
+            <TextBlock Text="{Binding Content}"/>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <Grid Grid.Row="2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBox x:Name="Command"/>
+        <Button Grid.Column="1" Content="{md:PackIcon Send}"
+                Command="{Binding SendAtCommand}"
+                IsDefault="True"
+                DataContext="{Binding Source={x:Static viewModels:Modem.Instance}}"
+                CommandParameter="{Binding ElementName=Command,Path=Text}"/>
+      </Grid>
     </Grid>
+
+    <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
+      <Rectangle Fill="{DynamicResource MaterialDesignDivider}" Opacity="0.4"/>
+
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding Source={x:Static viewModels:Sensor.AllView}}"
+                      Margin="20">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type viewModels:Sensor}">
+                <md:Card md:ShadowAssist.ShadowDepth="Depth2" Margin="20">
+                  <Grid Height="174">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto" MinWidth="74"/>
+                    </Grid.ColumnDefinitions>
+
+                    <lv:CartesianChart DataTooltip="{x:Null}" Hoverable="False" Opacity="0.7" Margin="0 4 0 0">
+                      <lv:CartesianChart.AxisY>
+                        <lv:Axis MaxValue="7" MinValue="-1">
+                          <lv:Axis.Separator>
+                            <lv:Separator Step="1"/>
+                          </lv:Axis.Separator>
+                        </lv:Axis>
+                      </lv:CartesianChart.AxisY>
+                      <lv:CartesianChart.AxisX>
+                        <lv:Axis LabelFormatter="{Binding LabelFormatter}"/>
+                      </lv:CartesianChart.AxisX>
+                      <lv:CartesianChart.Series>
+                        <lv:LineSeries Values="{Binding WaterLevels}" PointGeometry="{x:Null}"/>
+                      </lv:CartesianChart.Series>
+                    </lv:CartesianChart>
+
+                    <StackPanel Margin="20 10"
+                                VerticalAlignment="Top"
+                                HorizontalAlignment="Left">
+                      <TextBlock Text="{Binding SensorName}" Style="{DynamicResource MaterialDesignTitleTextBlock}"/>
+                      <TextBlock Text="{Binding Location}" Opacity="0.7"/>
+                    </StackPanel>
+                    <Rectangle Width="1" Fill="{DynamicResource MaterialDesignDivider}"
+                               HorizontalAlignment="Right"
+                               Grid.Column="0"/>
+                    <TextBlock Text="{Binding WaterLevel}"
+                               HorizontalAlignment="Center"
+                               Margin="20 10"
+                               FontSize="27pt" FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Grid.Column="1"/>
+                    <TextBlock Text="{Binding LastHeartBeatText}"
+                               Grid.Column="1"
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                               Margin="20"/>
+                  </Grid>
+                </md:Card>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <Button HorizontalAlignment="Right" VerticalAlignment="Bottom"
+              Focusable="False"
+              Style="{DynamicResource MaterialDesignFloatingActionButton}"
+              Content="{md:PackIcon Plus}"
+              Command="{Binding Source={x:Static viewModels:Sensor.AddCommand}}"
+              Margin="20"/>
+    </Grid>
+
+    <Image IsHitTestVisible="False" Source="/shadow-divider_2.png" RenderTransformOrigin="0.5 0.5"
+           Grid.Row="0" Grid.RowSpan="2"
+           Grid.Column="1" HorizontalAlignment="Left"
+           Stretch="Uniform">
+      <Image.RenderTransform>
+        <ScaleTransform ScaleX="-1"/>
+      </Image.RenderTransform>
+    </Image>
+  </Grid>
+  </md:DialogHost>
 </Window>

@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using FloodMonitor.ViewModels;
 
 namespace FloodMonitor
 {
@@ -23,6 +24,11 @@ namespace FloodMonitor
         public MainWindow()
         {
             InitializeComponent();
+
+            Messenger.Default.AddListener<ModemLog>(Messages.ModemDataReceived, log =>
+            {
+                ModemLog.ScrollIntoView(log);
+            });
         }
     }
 }

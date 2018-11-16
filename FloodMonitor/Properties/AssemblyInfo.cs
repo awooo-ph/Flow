@@ -7,12 +7,12 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FloodMonitor")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Flow")]
+[assembly: AssemblyDescription("Flood Warning System (Icon: http://www.clker.com/clipart-water-swirl.html)")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("FloodMonitor")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2018")]
+[assembly: AssemblyCompany("SFC-G BSIM 2019")]
+[assembly: AssemblyProduct("Flow")]
+[assembly: AssemblyCopyright("Copyright © 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

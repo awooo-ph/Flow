@@ -20,12 +20,6 @@ void DisplayClass::showWelcome(char * version)
     lcd->print(F("BSIM  BATCH 2019"));
     delay(4444);
     lcd->setCursor(0,0);
-    lcd->print(F("Presents F.M.W.S"));
-    lcd->setCursor(0,1);
-    lcd->print(F("Version  "));
-    lcd->print(version);
-    delay(4444);
-    lcd->setCursor(0,0);
     lcd->print(F("FLOOD MONITORING"));
     lcd->setCursor(0,1);
     lcd->print(F("& WARNING SYSTEM"));
@@ -35,9 +29,9 @@ void DisplayClass::showWelcome(char * version)
 void DisplayClass::showLoading()
 {
     lcd->setCursor(0,0);
-    lcd->print(F("STARTING MODEM"));
+    lcd->print(F("STARTING MODEM  "));
     lcd->setCursor(0,1);
-    lcd->print(F("PLEASE WAIT... "));
+    lcd->print(F("PLEASE WAIT...  "));
     delay(1111);
 }
 

@@ -4,6 +4,16 @@
              xmlns:local="clr-namespace:FloodMonitor"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
-    </Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+
+      <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#2a5099"/>
+      <SolidColorBrush x:Key="SecondaryAccentBrush" Color="#2c9eda"/>
+    </ResourceDictionary>
+  </Application.Resources>
 </Application>

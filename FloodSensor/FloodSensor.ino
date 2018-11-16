@@ -83,11 +83,9 @@ void OnWaterLevelChanged(uint8_t level)
         char * msg = ".0";
         sprintf(msg, ".%d", level);
         for (auto number : Settings.Current.Monitor)
-        {
             Sms.send(number, msg);
-        }
-        for (auto number : Settings.Current.NotifyNumbers)
-            Sms.send(number, Settings.Current.LevelMessage[level - 1]);
+
+        Sms.sendWarning(level);
     }
 }
 
@@ -132,6 +130,7 @@ void onReceive(char* number, char* message)
                 Settings.Current.SirenLevel[i] = message[i + 7];
             break;
         case '$':
+            
             break;
         default:;
         }

@@ -20,8 +20,6 @@ void SmsClass::parseCNUM(char* data)
     bool start = false;
     int index = 0;
     int len=strlen(data);
-    Serial.print("CNUM: len=");
-    Serial.println(len);
     for(auto i=7;i<len,i++;)
     {
         if(comma && start && data[i]!='"')

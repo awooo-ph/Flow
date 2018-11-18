@@ -22,8 +22,7 @@ public static class awooo
 
     public static bool IsCellNumber(this string s)
     {
-        if (s == null) return false;
-        
+        if (string.IsNullOrEmpty(s)) return false;
         if (s.StartsWith("0"))
         {
             if (s.Length != 11)
@@ -35,9 +34,9 @@ public static class awooo
                 return false;
             return true;
         }
-        else if (s.StartsWith("+"))
+        else
         {
-            var n = s.Substring(1);
+            var n = (s.StartsWith("+")) ? s.Substring(1) : s;
             var nn = 0L;
             if (!long.TryParse(n, out nn))
                 return false;
@@ -45,6 +44,6 @@ public static class awooo
                 return false;
             return true;
         }
-        return false;
+        //return false;
     }
 }

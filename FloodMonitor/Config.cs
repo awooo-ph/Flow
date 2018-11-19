@@ -43,6 +43,20 @@ namespace FloodMonitor
             }
         }
 
+        private bool _UseAtCommand;
+        [Trackable]
+        public bool UseAtCommand
+        {
+            get => _UseAtCommand;
+            set
+            {
+                if (value == _UseAtCommand) return;
+                _UseAtCommand = value;
+                OnPropertyChanged(nameof(UseAtCommand));
+                //Log.Refresh();
+            }
+        }
+
 
     }
 }

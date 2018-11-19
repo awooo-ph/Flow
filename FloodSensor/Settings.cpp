@@ -5,7 +5,8 @@
 #endif
 
 #ifndef MAXIMUM_SENSOR_NAME_LENGTH
-#define MAXIMUM_SENSOR_NAME_LENGTH 17
+#define MAXIMUM_SENSOR_NAME_LENGTH 47
+#define MAXIMUM_SENSOR_LOCATION_LENGTH 74
 #endif
 
 //const char STR_LEVEL_1[]     PROGMEM = "LEVEL 1";
@@ -48,6 +49,7 @@ void SettingsClass::LoadConfig()
         //    strcpy_P(Current.LevelMessage[i],(char *)pgm_read_word(&(SETTINGS_DEFAULTS[i])));
         //}
         Current.SensorName = new char[MAXIMUM_SENSOR_NAME_LENGTH];
+        Current.Location = new char[MAXIMUM_SENSOR_LOCATION_LENGTH];
         strcpy_P(Current.SensorName,"SENSOR1");
 	} 
 	

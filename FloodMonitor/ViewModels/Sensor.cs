@@ -112,7 +112,7 @@ namespace FloodMonitor.ViewModels
             }
         }
 
-        public bool IsWarning => WaterLevel >= WarningLevel;
+        public bool IsWarning => WarningLevel>0 && WaterLevel >= WarningLevel;
         
         private int _WaterLevel;
         public int WaterLevel
@@ -124,6 +124,10 @@ namespace FloodMonitor.ViewModels
                 _WaterLevel = value;
                 OnPropertyChanged(nameof(WaterLevel));
                 OnPropertyChanged(nameof(IsWarning));
+                if (Id>0 && IsWarning)
+                {
+                    MainViewModel.Instance.Notify($"{SensorName.ToUpper()} HAS REACHED LEVEL {WaterLevel}!");                    
+                }
             }
         }
 

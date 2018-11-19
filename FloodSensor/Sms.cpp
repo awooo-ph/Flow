@@ -57,9 +57,11 @@ bool SmsClass::init()
 
     char cmd[47];
 
-    sms->begin(9600);
+    sms->begin(115200);
 
     while (!sms) {}
+
+    sms->println("AT");
 
     for (auto i = 0; i < 7; i++)
     {
@@ -324,8 +326,7 @@ char* SmsClass::parseNumber(const char* str)
 
     int index = 2;
     bool start = false;
-    bool record = false;
-
+    
     for (int i = 0; i < len; i++)
     {
         if (str[i] == '"')
@@ -336,17 +337,10 @@ char* SmsClass::parseNumber(const char* str)
                 return _number;
             }
             start = true;
-        }
-
-        if (record)
+        } else if(start)
         {
             _number[index] = str[i];
             index++;
-        }
-
-        if (str[i] == '9' && start && !record)
-        {
-            record = true;
         }
     }
 
@@ -382,6 +376,8 @@ void SmsClass::parseSMS(char* command)
 
     char msg[147];
     readLine(msg);
+
+    sms->println(F("AT+CMGD=1,1"));
 
     if (onReceiveCallback) onReceiveCallback(number, msg);
 }

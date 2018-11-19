@@ -1,5 +1,3 @@
-// Sms.h
-
 #ifndef _SMS_h
 #define _SMS_h
 

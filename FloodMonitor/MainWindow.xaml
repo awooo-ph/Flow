@@ -19,7 +19,7 @@
         xmlns:converters="clr-namespace:FloodMonitor.Converters"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         WindowStartupLocation="CenterScreen"
-        Title="Flood Warning System" Height="450" Width="800">
+        Title="Flood Warning System" MinHeight="444" MinWidth="777">
   <md:DialogHost Identifier="Root">
     <Grid>
       <Grid.ColumnDefinitions>
@@ -153,7 +153,7 @@
           <ComboBox IsEditable="True" md:HintAssist.Hint="NUMBER" md:HintAssist.IsFloating="False"
                     Margin="0 0 10 0"
                     MaxWidth="117"
-                    Visibility="{Binding UseAtCommand,Converter={converters:BooleanToVisibility Collapsed,Visible}}"
+                    Visibility="{Binding UseAtCommand,Converter={converters:BooleanToVisibility Collapsed,Visible},Source={x:Static local:Config.Default}}"
                     ItemsSource="{Binding Source={x:Static viewModels:Sensor.AllView}}"
                     Text="{Binding SendTo,UpdateSourceTrigger=PropertyChanged}"
                     SelectedValuePath="Number">
@@ -168,7 +168,7 @@
           </ComboBox>
           <TextBox Grid.Column="1" Text="{Binding Message,UpdateSourceTrigger=PropertyChanged}"
                    x:Name="MessageBox"
-                   md:HintAssist.Hint="{Binding UseAtCommand,Converter={converters:BooleanToObject {}AT\ COMMAND,{}MESSAGE}}" md:HintAssist.IsFloating="False"/>
+                   md:HintAssist.Hint="{Binding UseAtCommand,Converter={converters:BooleanToObject {}AT\ COMMAND,{}MESSAGE},Source={x:Static local:Config.Default}}" md:HintAssist.IsFloating="False"/>
           <Button Grid.Column="2" Content="{md:PackIcon Send}"
                   Style="{DynamicResource MaterialDesignToolButton}"
                 Command="{Binding SendMessageCommand}"
@@ -219,7 +219,7 @@
                              TextWrapping="Wrap"/>
                 </StackPanel>
                 <ToggleButton Grid.Column="2"
-                              IsChecked="{Binding Source={x:Static viewModels:Modem.Instance},Path=UseAtCommand}"
+                              IsChecked="{Binding Source={x:Static local:Config.Default},Path=UseAtCommand}"
                               Style="{DynamicResource MaterialDesignSwitchToggleButton}"
                           Margin="10 10 0 0"
                               ToolTip="Enable/disable advance commands."
@@ -231,6 +231,15 @@
         </Grid>
       </Grid>
 
+      <Image IsHitTestVisible="False" Source="/shadow-divider_2.png" RenderTransformOrigin="0.5 0.5"
+             Grid.Row="0" Grid.RowSpan="2"
+             Grid.Column="1" HorizontalAlignment="Left"
+             Stretch="Uniform">
+        <Image.RenderTransform>
+          <ScaleTransform ScaleX="-1"/>
+        </Image.RenderTransform>
+      </Image>
+
       <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
         <Rectangle Fill="{DynamicResource MaterialDesignDivider}" Opacity="0.4"/>
 
@@ -240,14 +249,14 @@
                       Margin="40">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="{x:Type viewModels:Sensor}">
-                <md:Card md:ShadowAssist.ShadowDepth="Depth2" Margin="20">
+                <md:Card md:ShadowAssist.ShadowDepth="Depth2" Margin="20" UniformCornerRadius="4">
                   <Grid Height="174">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*"/>
                       <ColumnDefinition Width="Auto" MinWidth="74"/>
                     </Grid.ColumnDefinitions>
 
-                    <lv:CartesianChart DataTooltip="{x:Null}" Hoverable="False" Opacity="0.7" Margin="0 4 0 0">
+                    <lv:CartesianChart Opacity="0.7" Margin="7 10 0 0">
                       <lv:CartesianChart.AxisY>
                         <lv:Axis MaxValue="7" MinValue="-1">
                           <lv:Axis.Separator>
@@ -263,21 +272,56 @@
                         </lv:Axis>
                       </lv:CartesianChart.AxisX>
                       <lv:CartesianChart.Series>
-                        <lv:LineSeries Values="{Binding WaterLevels}" PointGeometry="{x:Null}"/>
+                        <lv:LineSeries Values="{Binding WaterLevels}" Title="LEVEL"/>
                       </lv:CartesianChart.Series>
                     </lv:CartesianChart>
 
                     <Grid VerticalAlignment="Top"
+                          IsHitTestVisible="False"
+                          Grid.ColumnSpan="2"
                           HorizontalAlignment="Left">
                       <Rectangle Fill="{DynamicResource MaterialDesignPaper}" Opacity="0.7"/>
-                      <StackPanel Margin="20 10">
-                      <TextBlock Text="{Binding SensorName}" Style="{DynamicResource MaterialDesignTitleTextBlock}"/>
-                      <TextBlock Text="{Binding Location}" Opacity="0.7"/>
-                    </StackPanel>
+                      <StackPanel Margin="40 10">
+                        <TextBlock Text="{Binding SensorName}" Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                                     Margin="0 0 0 0"/>
+                        <TextBlock Text="{Binding Location}" Opacity="0.7"/>
+                      </StackPanel>
                     </Grid>
+
+                    <Grid HorizontalAlignment="Right"
+                          Background="{DynamicResource MaterialDesignPaper}"
+                           Grid.Column="0" Margin="0 4 4 0"
+                           VerticalAlignment="Top">
+                      <StackPanel Orientation="Horizontal"
+                                  Opacity="{Binding RelativeSource={RelativeSource AncestorType={x:Type md:Card}},Path=IsMouseOver,Converter={converters:BooleanToObject 1, 0.2}}">
+                        <Button Content="{md:PackIcon Pencil}" Command="{Binding EditCommand}"
+                                ToolTip="Edit Sensor"
+                                Style="{DynamicResource MaterialDesignToolButton}"/>
+                        <Button Content="{md:PackIcon Delete}" Command="{Binding DeleteCommand}"
+                                ToolTip="Delete Sensor"
+                                Style="{DynamicResource MaterialDesignToolButton}"/>
+                        <Button Content="{md:PackIcon Settings}" Command="{Binding ShowConfigCommand}"
+                                ToolTip="Settings"
+                                Style="{DynamicResource MaterialDesignToolButton}"/>
+                      </StackPanel>
+                    </Grid>
+
+                    <Slider HorizontalAlignment="Left" Grid.Column="0" 
+                            ToolTip="Water Level Threshold"
+                            Margin="4 10 0 30"
+                            Value="{Binding WarningLevel}"
+                            TickFrequency="1" IsSnapToTickEnabled="True"
+                            Style="{DynamicResource MaterialDesignDiscreteSlider}"
+                            Orientation="Vertical" Maximum="5" Minimum="0" TickPlacement="TopLeft">
+                      <Slider.Resources>
+                        <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="{StaticResource ValidationErrorColor}"/>
+                      </Slider.Resources>
+                    </Slider>
+
                     <Rectangle Width="1" Fill="{DynamicResource MaterialDesignDivider}"
                                HorizontalAlignment="Right"
                                Grid.Column="0"/>
+                    
                     <Grid Grid.Column="1">
                       <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -286,6 +330,15 @@
                       </Grid.RowDefinitions>
                       <TextBlock Text="WATER LEVEL" Margin="10" HorizontalAlignment="Center"/>
                       <TextBlock Text="{Binding WaterLevel}"
+                                 Visibility="{Binding IsWarning,Converter={converters:BooleanToVisibility Collapsed,Visible}}"
+                                 Grid.Row="1"
+                                 HorizontalAlignment="Center"
+                                 Margin="20 10"
+                                 FontSize="47pt" FontWeight="Bold"
+                                 VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding WaterLevel}"
+                                 Visibility="{Binding IsWarning,Converter={converters:BooleanToVisibility}}"
+                                 Foreground="{DynamicResource ValidationErrorBrush}"
                                  Grid.Row="1"
                                  HorizontalAlignment="Center"
                                  Margin="20 10"
@@ -294,18 +347,6 @@
                       <TextBlock Text="{Binding LastHeartBeatText}" Margin="10" HorizontalAlignment="Center"
                                  Grid.Row="2"/>
                     </Grid>
-
-
-                    <md:PopupBox Grid.Column="0" 
-                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type md:Card}},Path=IsMouseOver,Converter={converters:BooleanToVisibility}}"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            Margin="7 7 0 7">
-                      <StackPanel>
-                        <Button Content="EDIT" Command="{Binding EditCommand}"/>
-                        <Button Content="DELETE" Command="{Binding DeleteCommand}"/>
-                      </StackPanel>
-                    </md:PopupBox>
                   </Grid>
                 </md:Card>
               </DataTemplate>
@@ -321,14 +362,7 @@
               Margin="20"/>
       </Grid>
 
-      <Image IsHitTestVisible="False" Source="/shadow-divider_2.png" RenderTransformOrigin="0.5 0.5"
-           Grid.Row="0" Grid.RowSpan="2"
-           Grid.Column="1" HorizontalAlignment="Left"
-           Stretch="Uniform">
-        <Image.RenderTransform>
-          <ScaleTransform ScaleX="-1"/>
-        </Image.RenderTransform>
-      </Image>
+     
     </Grid>
   </md:DialogHost>
 </Window>

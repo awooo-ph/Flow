@@ -170,9 +170,16 @@ internal static class Db
         var model = TypeAccessor.Create(typeof(T));
 
         var obj = model.CreateNew();
-
+        var pk = "";
+        long id = 0;
         foreach (var dbColumn in table.Columns)
         {
+            if (dbColumn.IsPrimaryKey)
+            {
+                pk = dbColumn.Name;
+                id = (long) reader[dbColumn.Name];
+                continue;
+            }
             if (reader.GetOrdinal(dbColumn.Name) < 0)
             {
                 InsertColumn(table, dbColumn);
@@ -183,6 +190,9 @@ internal static class Db
                 model[obj, dbColumn.Name] = dbColumn.GetValue(reader[dbColumn.Name]);
             }
         }
+
+        model[obj, pk] = id;
+
         return (T)obj;
     }
 

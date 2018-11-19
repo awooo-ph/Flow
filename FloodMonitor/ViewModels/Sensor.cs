@@ -142,6 +142,7 @@ namespace FloodMonitor.ViewModels
         }
 
         private ICommand _EditCommand;
+        [Ignore]
         public ICommand EditCommand => _EditCommand ?? (_EditCommand = new DelegateCommand(async d =>
         {
             var sensor = await NewSensorDialog.Show(this);
@@ -242,10 +243,104 @@ namespace FloodMonitor.ViewModels
             {
                 if (value == _SensorName) return;
                 _SensorName = value;
+                if (value.Length > 47 - 1)
+                    _SensorName = value.Substring(0, 47 - 1);
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                }
+                _SensorName = _SensorName.Replace(",", "");
                 OnPropertyChanged(nameof(SensorName));
             }
         }
 
+        private int _Siren1 = 1;
+
+        public int Siren1
+        {
+            get => _Siren1;
+            set
+            {
+                if (value == _Siren1) return;
+                _Siren1 = value;
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                }
+                if (value < 0) _Siren1 = 0;
+                if (value > 5) _Siren1 = 5;
+                OnPropertyChanged(nameof(Siren1));
+            }
+        }
+
+        private int _Siren2 = 2;
+
+        public int Siren2
+        {
+            get => _Siren2;
+            set
+            {
+                if (value == _Siren2) return;
+                _Siren2 = value;
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                }
+                if (value < 0) _Siren2 = 0;
+                if (value > 5) _Siren2 = 5;
+                OnPropertyChanged(nameof(Siren2));
+            }
+        }
+
+        private int _Siren3 = 3;
+
+        public int Siren3
+        {
+            get => _Siren3;
+            set
+            {
+                if (value == _Siren3) return;
+                _Siren3 = value;
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                }
+                if (value < 0) _Siren3 = 0;
+                if (value > 5) _Siren3 = 5;
+                OnPropertyChanged(nameof(Siren3));
+            }
+        }
+
+        private bool _SettingsSaved;
+
+        public bool SettingsSaved
+        {
+            get => _SettingsSaved;
+            set
+            {
+                if (value == _SettingsSaved) return;
+                _SettingsSaved = value;
+                OnPropertyChanged(nameof(SettingsSaved));
+            }
+        }
+
+        private bool _SettingsSent;
+        [Ignore]
+        public bool SettingsSent
+        {
+            get => _SettingsSent;
+            set
+            {
+                if (value == _SettingsSent) return;
+                _SettingsSent = value;
+                OnPropertyChanged(nameof(SettingsSent));
+            }
+        }
+        
         private string _Location;
         public string Location
         {
@@ -254,6 +349,14 @@ namespace FloodMonitor.ViewModels
             {
                 if (value == _Location) return;
                 _Location = value;
+                if (value.Length > 74 - 1)
+                    _SensorName = value.Substring(0, 74 - 1);
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                }
+                _SensorName = _SensorName.Replace(",", "");
                 OnPropertyChanged(nameof(Location));
             }
         }
@@ -261,6 +364,29 @@ namespace FloodMonitor.ViewModels
         protected override bool GetIsEmpty()
         {
             return false;
+        }
+
+        private bool _Verified;
+
+        public bool Verified
+        {
+            get => _Verified;
+            set
+            {
+                if (value == _Verified) return;
+                _Verified = value;
+                OnPropertyChanged(nameof(Verified));
+            }
+        }
+
+        internal override void OnSaved()
+        {
+            if (!SettingsSaved)
+            {
+                Modem.Instance.SendMessage(Number,$"={SensorName},{Siren1},{Siren2},{Siren3}\rhttps://goo.gl/WD3Kka");
+                SettingsSent = true;
+            }
+            base.OnSaved();
         }
 
         public void SetLevel(int level)

@@ -84,7 +84,6 @@ namespace FloodMonitor.ViewModels
                     AddLog(ModemLog.LogTypes.AtCommand, cmd);
                 }
                 //await Task.Delay(111);
-                
             }
             OnPropertyChanged(nameof(IsOnline));
             Start();
@@ -282,7 +281,12 @@ namespace FloodMonitor.ViewModels
         private void ParseCommand(Sensor sensor, string command)
         {
             if (sensor==null || string.IsNullOrEmpty(command)) return;
-            if (command.StartsWith(".") && command.Length>=2)
+            if(command == "==")
+                sensor.Update(nameof(sensor.SettingsSaved),true);
+            else if (command == "https://goo.gl/RBy5eb")
+            {
+                sensor.Update(nameof(sensor.Verified),true);
+            } else if (command.StartsWith(".") && command.Length>=2)
             {
                 var level = 0;
                 if (int.TryParse(command.Substring(1, 1), out level))
@@ -387,7 +391,7 @@ namespace FloodMonitor.ViewModels
         }
 
         private bool _sendingMessage;
-        public async void SendMessage(string number, string message)
+        public async void SendMessage(string number, string message, bool log=true)
         {
             if (!IsOnline) return;
             if(!Config.Default.UseAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
@@ -402,7 +406,7 @@ namespace FloodMonitor.ViewModels
                 _port.Write($"{(char)26}");
                 _sendingMessage = false;
 
-                if(!Config.Default.UseAtCommand) 
+                if(!Config.Default.UseAtCommand && log) 
                 if(await WaitOk())
                     AddLog(ModemLog.LogTypes.Info, "Message Sent!");
                 else

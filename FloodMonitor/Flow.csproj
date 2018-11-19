@@ -89,6 +89,8 @@
     <Compile Include="Converters\BooleanToObject.cs" />
     <Compile Include="Converters\BooleanToVisibility.cs" />
     <Compile Include="Converters\ConverterBase.cs" />
+    <Compile Include="Converters\LogTypeConverter.cs" />
+    <Compile Include="Converters\SensorDialogTitleConverter.cs" />
     <Compile Include="Data\Connection.cs" />
     <Compile Include="Data\DbColumn.cs" />
     <Compile Include="Data\DbTable.cs" />
@@ -96,6 +98,9 @@
     <Compile Include="Data\ModelBase.cs" />
     <Compile Include="Data\TableAttribute.cs" />
     <Compile Include="DelegateCommand.cs" />
+    <Compile Include="MessageDialog.xaml.cs">
+      <DependentUpon>MessageDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Messages.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="NewSensorDialog.xaml.cs">
@@ -121,6 +126,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="MessageDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="NewSensorDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

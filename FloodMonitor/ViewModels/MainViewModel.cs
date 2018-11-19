@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using MaterialDesignThemes.Wpf;
 
 namespace FloodMonitor.ViewModels
 {
@@ -55,6 +56,15 @@ namespace FloodMonitor.ViewModels
                 OnPropertyChanged(nameof(SelectedSensor));
             }
         }
-        
+
+        private SnackbarMessageQueue _messageQueue;
+
+        public SnackbarMessageQueue MessageQueue =>
+            _messageQueue ?? (_messageQueue = new SnackbarMessageQueue(TimeSpan.FromSeconds(7)));
+
+        public void Notify(string message)
+        {
+            MessageQueue.Enqueue(message);
+        }
     }
 }

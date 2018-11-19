@@ -38,7 +38,7 @@ namespace FloodMonitor.ViewModels
                         {
                             sensor.OnPropertyChanged(nameof(LastHeartBeatText));
                         }
-                        await Task.Delay(1111);    
+                        await Task.Delay(7777);    
                     }
                 });
                 return _AllView;
@@ -95,6 +95,24 @@ namespace FloodMonitor.ViewModels
                 OnPropertyChanged(nameof(Number));
             }
         }
+
+        private int _WarningLevel;
+
+        public int WarningLevel
+        {
+            get => _WarningLevel;
+            set
+            {
+                if (value == _WarningLevel) return;
+                _WarningLevel = value;
+                OnPropertyChanged(nameof(WarningLevel));
+                if(Id>0)
+                    Save();
+                OnPropertyChanged(nameof(IsWarning));
+            }
+        }
+
+        public bool IsWarning => WaterLevel >= WarningLevel;
         
         private int _WaterLevel;
         public int WaterLevel
@@ -105,14 +123,15 @@ namespace FloodMonitor.ViewModels
                 if (value == _WaterLevel) return;
                 _WaterLevel = value;
                 OnPropertyChanged(nameof(WaterLevel));
+                OnPropertyChanged(nameof(IsWarning));
             }
         }
 
         public bool NumberEquals(string number)
         {
             if (number.Length < 2) return false;
-            var n1 = number.StartsWith("+") ? number.Substring(2) : number.Substring(1);
-            var n2 = Number.StartsWith("+") ? Number.Substring(2) : Number.Substring(1);
+            var n1 = number.StartsWith("+") ? number.Substring(3) : number.Substring(1);
+            var n2 = Number.StartsWith("+") ? Number.Substring(3) : Number.Substring(1);
             return n1 == n2;
         }
 
@@ -153,7 +172,8 @@ namespace FloodMonitor.ViewModels
             Charting.For<WaterLevel>(mapper);
             LabelFormatter = v =>
             {
-                return _levels.Skip((int)v).FirstOrDefault()?.DateTime.ToString("MMM d h:m tt");
+                if ((int) v == 0) return "";
+                return _levels.Skip((int)v).FirstOrDefault()?.DateTime.ToString("MMM d h:mm tt");
                 //return ViewModels.WaterLevel.GetById((long) v)?.DateTime.ToShortDateString();
                 //return new DateTime((long) v).ToString("M/d/yy h:m A");
             };
@@ -168,6 +188,11 @@ namespace FloodMonitor.ViewModels
                 if (_waterLevels != null) return _waterLevels;
                 _levels = ViewModels.WaterLevel.Cache.Where(x => x.SensorId == Id).ToList();
                 _waterLevels = new ChartValues<int>(_levels.Select(x=>x.Level));
+                if (_waterLevels.Count == 0)
+                {
+                    SetLevel(0);
+                    SetLevel(0);
+                }
                 return _waterLevels;
             }
         }
@@ -196,10 +221,10 @@ namespace FloodMonitor.ViewModels
             {
                 if (LastHeartBeat == DateTime.MinValue) return "NEVER";
                 var elapsed = DateTime.Now - LastHeartBeat;
-                if (elapsed.TotalMinutes < 1) return $"{elapsed.Seconds} sec ago";
-                if (elapsed.TotalHours < 1) return $"{elapsed.Minutes} min ago";
-                if (elapsed.TotalDays < 1) return $"{elapsed.Days} hr ago";
-                return $"{elapsed.Days} days ago";
+                if (elapsed.TotalMinutes < 2) return $"{(long)elapsed.TotalSeconds} seconds";
+                if (elapsed.TotalHours < 2) return $"{(long)elapsed.TotalMinutes} minutes";
+                if (elapsed.TotalDays < 2) return $"{(long) elapsed.TotalHours} hours";
+                return $"{(long)elapsed.TotalDays} days ago";
             }
             set
             {
@@ -240,19 +265,21 @@ namespace FloodMonitor.ViewModels
 
         public void SetLevel(int level)
         {
-            var newLevel = new WaterLevel()
-            {
-                Level = level,
-                SensorId = Id
-            };
-            newLevel.Save();
-            WaterLevel = level;
-            LastHeartBeat = DateTime.Now;
-            Save();
-            //WaterLevels.Add(newLevel);
-            _levels.Add(newLevel);
-            WaterLevels.Add(level);
-            //OnPropertyChanged(nameof(ChartStep));
+            awooo.Context.Post(d=>{
+                var newLevel = new WaterLevel()
+                {
+                    Level = level,
+                    SensorId = Id
+                };
+                newLevel.Save();
+                WaterLevel = level;
+                LastHeartBeat = DateTime.Now;
+                Save();
+                //WaterLevels.Add(newLevel);
+                _levels.Add(newLevel);
+                WaterLevels.Add(level);
+                //OnPropertyChanged(nameof(ChartStep));
+            },null);
         }
     }
 }

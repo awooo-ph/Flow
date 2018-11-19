@@ -10,7 +10,9 @@ namespace FloodMonitor.ViewModels
     {
         public enum LogTypes
         {
-            AtCommand
+            AtCommand,
+            Sms,
+            Error
         }
         public LogTypes LogType { get; set; }
         public string Content { get; set; }

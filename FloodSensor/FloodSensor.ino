@@ -91,6 +91,7 @@ void OnWaterLevelChanged(uint8_t level)
 
 void onReceive(char* number, char* message)
 {
+
     switch (message[0]) {
     case '?':
 
@@ -108,34 +109,44 @@ void onReceive(char* number, char* message)
         case 'i':
             Sms.write(Sms.getIMEI());
             break;
+        case 's':
+            for(auto i=0;i<3;i++)
+                Sms.write(Settings.Current.SirenLevel[i]-'0');
         default:
             Sms.write(message[1]);
         }
         Sms.commitSend();
         break;
     case '=':
-        switch (message[1])
+        auto ci=0;
+        auto vi=0;
+        char value[74];
+        for (auto i = 1; i < strlen(message); i++)
         {
-        case '@':
-            for (auto i = 2; i < strlen(message); i++)
+            if(message[i]==',')
             {
-                if (i < 17) Settings.Current.SensorName[i - 2] = message[i];
-                if (message[i] == '\0') break;
+                value[vi]='\0';
+                if(ci==0)
+                {
+                    message[47-1] = '\0';
+                    strcpy(Settings.Current.SensorName,value);
+                } else if(ci==1)
+                {
+                    Settings.Current.SirenLevel[0] = value[0];
+                } else if(ci==2)
+                    Settings.Current.SirenLevel[1] = value[1];
+                else if(ci==3)
+                    Settings.Current.SirenLevel[2] = value[2];
+                vi=0;
+                ci++;
             }
-            break;
-        case '#':
-            for (auto i = 0; i < 5; i++)
-                Settings.Current.NotifyLevel[i] = message[i + 2] == '1';
-            for (auto i = 0; i < 3; i++)
-                Settings.Current.SirenLevel[i] = message[i + 7];
-            break;
-        case '$':
-            
-            break;
-        default:;
+            value[vi]=message[i];
+            vi++;
         }
 
         Settings.SaveConfig();
+
+        Sms.send(number,"==");
         break;
     default:;
     }

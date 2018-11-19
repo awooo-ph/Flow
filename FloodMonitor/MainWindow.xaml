@@ -21,7 +21,109 @@
         WindowStartupLocation="CenterScreen"
         Title="Flood Warning System" MinHeight="444" MinWidth="777">
   <md:DialogHost Identifier="Root">
-    <Grid>
+    <md:DrawerHost IsRightDrawerOpen="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSensorSettings}">
+      <md:DrawerHost.RightDrawerContent>
+        <Grid DataContext="{Binding Source={x:Static viewModels:MainViewModel.Instance}}">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <Grid Margin="10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <md:PackIcon Kind="Settings" Height="44" Width="44" Margin="0"/>
+            <TextBlock Style="{DynamicResource MaterialDesignHeadlineTextBlock}"
+                       Margin="10 10 47 10"
+                       VerticalAlignment="Center"
+                       Grid.Column="1">
+              <Run Text="{Binding SelectedSensor.SensorName}"/><Run Text=" SETTINGS"/>
+            </TextBlock>
+            <Button Grid.Column="2"
+                    Content="{md:PackIcon Close}"
+                    Command="{Binding HideSensorSettingsCommand}"
+                    Margin="0"
+                    VerticalAlignment="Top"
+                    Style="{DynamicResource MaterialDesignFlatButton}"/>
+          </Grid>
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel DataContext="{Binding SelectedSensor}"
+                      Grid.Row="1">
+            <Grid Margin="20">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                           Text="SIREN 1"/>
+                <TextBlock Text="Water level to activate Siren 1" Opacity="0.7"/>
+              </StackPanel>
+              <TextBox Text="{Binding Siren1,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
+                       Grid.Column="1"
+                       VerticalAlignment="Center"
+                       md:HintAssist.Hint="WATER LEVEL"
+                       md:HintAssist.IsFloating="True"/>
+            </Grid>
+            <Grid Margin="20">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                           Text="SIREN 2"/>
+                <TextBlock Text="Water level to activate Siren 2" Opacity="0.7"/>
+              </StackPanel>
+              <TextBox Text="{Binding Siren2,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
+                       Grid.Column="1"
+                       VerticalAlignment="Center"
+                       md:HintAssist.Hint="WATER LEVEL"
+                       md:HintAssist.IsFloating="True"/>
+            </Grid>
+            <Grid Margin="20">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                           Text="SIREN 3"/>
+                <TextBlock Text="Water level to activate Siren 3" Opacity="0.7"/>
+              </StackPanel>
+              <TextBox Text="{Binding Siren3,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
+                       Grid.Column="1"
+                       VerticalAlignment="Center"
+                       md:HintAssist.Hint="WATER LEVEL"
+                       md:HintAssist.IsFloating="True"/>
+            </Grid>
+          </StackPanel>
+          </ScrollViewer>
+          <UniformGrid Grid.Row="2" HorizontalAlignment="Right"
+                       Rows="1"
+                       Margin="10">
+            <Button Content="_SAVE CHANGES" Command="{Binding SelectedSensor.SaveCommand}"/>
+          </UniformGrid>
+
+          <Grid Grid.Row="2" Margin="10" HorizontalAlignment="Left"
+                Visibility="{Binding SelectedSensor.SettingsSaved,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
+            <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedSensor.SettingsSent,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
+              <md:PackIcon Kind="Alert" VerticalAlignment="Center"/>
+              <TextBlock Text="  Changes are not saved!" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedSensor.SettingsSent,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
+              <ProgressBar Style="{DynamicResource MaterialDesignCircularProgressBar}"
+                           IsIndeterminate="True"/>
+              <TextBlock Text="   Sending changes to sensor..." VerticalAlignment="Center"/>
+            </StackPanel>
+          </Grid>
+          
+        </Grid>
+      </md:DrawerHost.RightDrawerContent>
+      <Grid>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="333"/>
         <ColumnDefinition Width="*"/>
@@ -300,7 +402,9 @@
                         <Button Content="{md:PackIcon Delete}" Command="{Binding DeleteCommand}"
                                 ToolTip="Delete Sensor"
                                 Style="{DynamicResource MaterialDesignToolButton}"/>
-                        <Button Content="{md:PackIcon Settings}" Command="{Binding ShowConfigCommand}"
+                        <Button Content="{md:PackIcon Settings}" 
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSensorSettingsCommand}"
+                                CommandParameter="{Binding}"
                                 ToolTip="Settings"
                                 Style="{DynamicResource MaterialDesignToolButton}"/>
                       </StackPanel>
@@ -364,5 +468,6 @@
 
      
     </Grid>
+    </md:DrawerHost>
   </md:DialogHost>
 </Window>

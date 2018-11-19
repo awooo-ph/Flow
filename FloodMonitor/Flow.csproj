@@ -106,6 +106,7 @@
     <Compile Include="NewSensorDialog.xaml.cs">
       <DependentUpon>NewSensorDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\ModemLog.cs" />
     <Compile Include="ViewModels\Modem.cs" />
     <Compile Include="Config.cs" />

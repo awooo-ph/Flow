@@ -20,6 +20,12 @@ namespace FloodMonitor.Converters
                     return PackIconKind.Console;
                 case ModemLog.LogTypes.Sms:
                     return PackIconKind.Message;
+                case ModemLog.LogTypes.Error:
+                    return PackIconKind.Error;
+                case ModemLog.LogTypes.Info:
+                    return PackIconKind.Information;
+                case ModemLog.LogTypes.WaterLevel:
+                    return PackIconKind.Water;
                 default:
                     return PackIconKind.Alert;
             }

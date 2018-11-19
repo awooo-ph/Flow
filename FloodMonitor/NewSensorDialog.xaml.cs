@@ -27,46 +27,32 @@ namespace FloodMonitor
             InitializeComponent();
         }
 
-        internal static async Task<Sensor> Show()
+        internal static async Task<Sensor> Show(Sensor sensor = null)
         {
             var dlg = new NewSensorDialog();
+
+            if (sensor == null)
+                sensor = new Sensor();
+
+            dlg.DataContext = sensor;
+
             var res = await DialogHost.Show(dlg, "Root");
             if ((res is bool b) && b)
             {
-                if (string.IsNullOrEmpty(dlg.Name.Text))
+                if (string.IsNullOrEmpty(sensor.SensorName))
                 {
-                    MessageBox.Show("Name is required");
+                    await MessageDialog.Show("Sensor name is required!");
                     return null;
                 }
-                if (string.IsNullOrEmpty(dlg.Number.Text))
+                if (string.IsNullOrEmpty(sensor.Number))
                 {
-                    MessageBox.Show("Number is required");
-                    return null;
-                }
-
-                if (!dlg.Number.Text.IsCellNumber())
-                {
-                    MessageBox.Show("Invalid number!");
+                    await MessageDialog.Show("Sensor SIM number is required!");
                     return null;
                 }
 
-                var sensor = new Sensor()
+                if (!sensor.Number.IsCellNumber())
                 {
-                    Number = dlg.Number.Text,
-                    Location = dlg.Location.Text,
-                    SensorName = dlg.Name.Text
-                };
-
-                var oldSensor = Sensor.Cache.FirstOrDefault(x => x.Equals(sensor));
-                if (oldSensor != null)
-                {
-                    if (oldSensor.IsDeleted)
-                    {
-                        oldSensor.Undelete();
-                        return null;
-                    }
-
-                    MessageBox.Show($"A sensor with mobile number {sensor.Number} already exists.");
+                    await MessageDialog.Show("SIN number is invalid!");
                     return null;
                 }
 

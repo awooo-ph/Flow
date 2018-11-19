@@ -16,6 +16,7 @@ public static class awooo
         set
         {
             if (_context != null) return;
+            if (value == null) return;
             _context = value;
         }
     }

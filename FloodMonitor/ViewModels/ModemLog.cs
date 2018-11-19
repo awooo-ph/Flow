@@ -12,7 +12,9 @@ namespace FloodMonitor.ViewModels
         {
             AtCommand,
             Sms,
-            Error
+            Error,
+            Info,
+            WaterLevel
         }
         public LogTypes LogType { get; set; }
         public string Content { get; set; }

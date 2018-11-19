@@ -15,7 +15,7 @@ namespace FloodMonitor.ViewModels
     {
         private SynchronizationContext _context;
         private ObservableCollection<ModemLog> _log = new ObservableCollection<ModemLog>();
-        private SerialPort _port;
+        private static SerialPort _port;
         private Task _serialReader;
         private static Modem _instance;
         public static Modem Instance => _instance ?? (_instance = new Modem());
@@ -26,7 +26,39 @@ namespace FloodMonitor.ViewModels
             Start();
         }
 
+        private DateTime _lastCREG = DateTime.MinValue;
+        private Task _signalChecker;
+        private void CheckSignal()
+        {
+            if (_signalChecker != null) return;
+            _signalChecker = Task.Factory.StartNew(async () =>
+            {
+                while (HasSIM && _port != null)
+                {
+                    if ((DateTime.Now - _lastCREG).TotalSeconds >= 47)
+                    {
+                        _lastCREG = DateTime.Now;
+                        if (receivedSms > 7)
+                        {
+                            SendAT("AT+CMGD=1,1");
+                            receivedSms = 0;
+                        }
+                        else
+                            SendAT("AT+CSQ");
+
+                    }
+                    else
+                    {
+                        await Task.Delay(1111);
+                    }
+                }
+
+                _signalChecker = null;
+            });
+        }
+        
         private bool pauseReading = false;
+        
         private async void ReadSerial()
         {
             while (_port?.IsOpen??false)
@@ -43,32 +75,30 @@ namespace FloodMonitor.ViewModels
                 }
                 catch (Exception e)
                 {
-                    var log = new ModemLog()
-                    {
-                        Content = e.Message,
-                        LogType = ModemLog.LogTypes.Error
-                    };
-                    _log.Add(log);
+                    AddLog(ModemLog.LogTypes.Error, e.Message);
                     break;
                 }
                 if (!string.IsNullOrEmpty(cmd))
                 {
                     ProcessCommand(cmd);
-                    _context.Post(l =>
-                    {
-                        var log = new ModemLog()
-                        {
-                            Content = cmd,
-                            LogType = ModemLog.LogTypes.AtCommand
-                        };
-                        _log.Add(log);
-                        Messenger.Default.Broadcast(Messages.ModemDataReceived,log);
-                    },null);
+                    AddLog(ModemLog.LogTypes.AtCommand, cmd);
                 }
                 //await Task.Delay(111);
+                
             }
             OnPropertyChanged(nameof(IsOnline));
             Start();
+        }
+
+        public void AddLog(ModemLog.LogTypes type, string content)
+        {
+            var log = new ModemLog()
+            {
+                Content = content,
+                LogType = type
+            };
+            _context.Post(l =>_log.Add(log),null);
+            Messenger.Default.Broadcast(Messages.ModemDataReceived,log);
         }
 
         private bool _IsBooting;
@@ -118,7 +148,7 @@ namespace FloodMonitor.ViewModels
                 IsOnline = true;
                 return;
             }
-            else if(command.Contains("ERROR"))
+            if(command.Contains("ERROR"))
             {
                 _okReceived = false;
                 return;
@@ -146,13 +176,26 @@ namespace FloodMonitor.ViewModels
                 Operator = command.Substring(8, command.IndexOf("\",") - 8);
             } else if (command.StartsWith("+CLIP:"))
                 _port.WriteLine("ATH");
-            else if (command.StartsWith("+CMT: ")) //New message
+            else if (command.StartsWith("+CMT:")) //New message
                 ParseSms(command);
+            else if (command.StartsWith("+CMTI:"))
+            {
+                var index = command.Substring(command.IndexOf(",") + 1);
+                _port.WriteLine($"AT+CMGR={index}");
+            }
         }
 
         private string GetNumber(string command)
         {
-            command = command.Substring(command.IndexOf("\"")+1);
+            if (command.StartsWith("+CMT:"))
+            {
+                command = command.Substring(command.IndexOf("\"") + 1);
+            }
+            else if (command.StartsWith("+CMGR:"))
+            {
+                command = command.Substring(command.IndexOf(",\"") + 2);
+            }
+
             return command.Substring(0, command.IndexOf("\""));
         }
 
@@ -166,31 +209,74 @@ namespace FloodMonitor.ViewModels
             }
         }
 
-        private void ParseSms(string command)
+        private Task _atSender;
+        private object _atCommandsLock = new object();
+        private Queue<Tuple<string,int>> _atCommands = new Queue<Tuple<string,int>>();
+        private void SendAT(string at,int wait=0)
+        {
+            lock (_atCommandsLock)
+                _atCommands.Enqueue(new Tuple<string, int>(at,wait));
+
+            if (_atSender != null) return;
+            _atSender = Task.Factory.StartNew(async () =>
+            {
+                while (_port!=null)
+                {
+                    Tuple<string,int> cmd = null;
+                    lock (_atCommandsLock)
+                    {
+                        try
+                        {
+                            if(_atCommands.Count>0) cmd = _atCommands.Dequeue();
+                        }
+                        catch (Exception e)
+                        {
+                            //
+                        }
+                    }
+
+                    if (cmd==null)
+                    {
+                        await Task.Delay(777);
+                        continue;
+                    }
+
+                    while (_sendingMessage)
+                    {
+                        await Task.Delay(777);
+                    }
+
+                    _port?.WriteLine(cmd.Item1);
+                    if (cmd.Item2 > 0)
+                        await Task.Delay(cmd.Item2);
+                }
+
+                _atSender = null;
+            });
+        }
+
+        private int receivedSms = 0;
+        private async void ParseSms(string command)
         {
             if (_port == null) return;
+            var msg = _port.ReadLine()?.Trim();
+            
             var sms = new Sms()
             {
                 Sender = GetNumber(command),
-                Message = _port.ReadLine()
+                Message = msg
             };
+
             var sensor = Sensor.Cache.FirstOrDefault(x => x.NumberEquals(sms.Sender));
             if (sensor == null)
             {
-                _context.Post(d =>
-                {
-                    _log.Add(new ModemLog()
-                    {
-                       Content = sms.ToString(),
-                       LogType = ModemLog.LogTypes.Sms
-                    });
-                },null);
+                AddLog(ModemLog.LogTypes.Sms, sms.ToString());
             }
             else
             {
                 ParseCommand(sensor, sms.Message);
             }
-            Messenger.Default.Broadcast(Messages.SmsReceived, sms);
+            receivedSms++;
         }
 
         private void ParseCommand(Sensor sensor, string command)
@@ -202,6 +288,7 @@ namespace FloodMonitor.ViewModels
                 if (int.TryParse(command.Substring(1, 1), out level))
                 {
                     sensor.SetLevel(level);
+                    AddLog(ModemLog.LogTypes.WaterLevel, $"{sensor.SensorName.ToUpper()}: LEVEL {level}");
                 }
             }
         }
@@ -223,7 +310,7 @@ namespace FloodMonitor.ViewModels
             try
             {
                 _port = new SerialPort(port,115200);
-                _port.NewLine = "\r";
+                _port.NewLine = "\r\n";
                 _port.DtrEnable = false;
                 _port.Open();
                         
@@ -281,38 +368,45 @@ namespace FloodMonitor.ViewModels
             {
                 var commands = new List<string>()
                 {
+                    "AT+CMGD=1,1",          // Delete all sms
                     "AT+CNUM",
-                    "AT+CSQ",
-                    "AT+CREG=1",            // Network Registration
-                    "AT+CSMS=1",            // Select Message Service
-                    "AT+CNMI=2,2,0,0,0",    // New Message Indication
-                    "AT+CMGF=1",            // Select Message Format (0:PDU; 1:TEXT)
+                    "AT+CSMS=1",            // Select message service
+                    "AT+CNMI=2,2,0,0,0",    // New message indication
+                    "AT+CMGF=1",            // Select message format (0:PDU; 1:TEXT)
                     "AT+CSCS=\"GSM\"",
-                    "AT+CSPN?"
+                    "AT+CSPN?",
                 };
                 foreach (var command in commands)
                 {
                     _port.WriteLine(command);
                     await WaitOk();
                 }
+                CheckSignal();
             }
             IsBooting = false;
         }
 
+        private bool _sendingMessage;
         public async void SendMessage(string number, string message)
         {
             if (!IsOnline) return;
-
+            if(!Config.Default.UseAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
             await Task.Factory.StartNew(async ()=>
             {
-                pauseReading = true;
+                _sendingMessage = true;
                 _port.WriteLine("AT");
                 await Task.Delay(111);
                 _port.WriteLine($"AT+CMGS=\"{number}\"");
-                _port.ReadLine();
+                await Task.Delay(1111);
                 _port.WriteLine(message);
-                _port.Write(new[]{(char)26},0,1);
-                pauseReading = false;
+                _port.Write($"{(char)26}");
+                _sendingMessage = false;
+
+                if(!Config.Default.UseAtCommand) 
+                if(await WaitOk())
+                    AddLog(ModemLog.LogTypes.Info, "Message Sent!");
+                else
+                    AddLog(ModemLog.LogTypes.Info, "Sending Message Failed!");
             });
         }
         
@@ -347,10 +441,10 @@ namespace FloodMonitor.ViewModels
         public ICommand SendMessageCommand =>
             _SendMessageCommand ?? (_SendMessageCommand = new DelegateCommand(d =>
             {
-                if (UseAtCommand)
+                if (Config.Default.UseAtCommand)
                 {
                     var msg = Message.Replace("^Z",$"{(char)26}");
-                    _port.WriteLine(msg);
+                    SendAT(msg);
                 }
                 else
                 {
@@ -408,18 +502,7 @@ namespace FloodMonitor.ViewModels
             AtCommand = "";
         },d=>(_port?.IsOpen??false) && !string.IsNullOrEmpty(AtCommand)));
 
-        private bool _UseAtCommand;
-        public bool UseAtCommand
-        {
-            get => _UseAtCommand;
-            set
-            {
-                if (value == _UseAtCommand) return;
-                _UseAtCommand = value;
-                OnPropertyChanged(nameof(UseAtCommand));
-                //Log.Refresh();
-            }
-        }
+       
 
         private ListCollectionView _logView;
         public ListCollectionView Log
@@ -435,7 +518,7 @@ namespace FloodMonitor.ViewModels
 
         private bool FilterLog(object obj)
         {
-            if (UseAtCommand) return true;
+            if (Config.Default.UseAtCommand) return true;
             if (!(obj is ModemLog l)) return false;
             return l.LogType != ModemLog.LogTypes.AtCommand;
         }

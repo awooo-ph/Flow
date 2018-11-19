@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
+using System.Linq;
 using System.Management;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,11 +26,31 @@ namespace FloodMonitor.ViewModels
             Start();
         }
 
+        private bool pauseReading = false;
         private async void ReadSerial()
         {
-            while (_port.IsOpen)
+            while (_port?.IsOpen??false)
             {
-                var cmd = _port.ReadLine()?.Trim();
+                while (pauseReading)
+                {
+                    await Task.Delay(111);
+                }
+
+                var cmd = "";
+                try
+                {
+                    cmd = _port.ReadLine()?.Trim();
+                }
+                catch (Exception e)
+                {
+                    var log = new ModemLog()
+                    {
+                        Content = e.Message,
+                        LogType = ModemLog.LogTypes.Error
+                    };
+                    _log.Add(log);
+                    break;
+                }
                 if (!string.IsNullOrEmpty(cmd))
                 {
                     ProcessCommand(cmd);
@@ -44,8 +65,10 @@ namespace FloodMonitor.ViewModels
                         Messenger.Default.Broadcast(Messages.ModemDataReceived,log);
                     },null);
                 }
-                await Task.Delay(111);
+                //await Task.Delay(111);
             }
+            OnPropertyChanged(nameof(IsOnline));
+            Start();
         }
 
         private bool _IsBooting;
@@ -65,6 +88,7 @@ namespace FloodMonitor.ViewModels
         private bool _checking = false;
         public async void Check()
         {
+            if (_port == null) return;
             if (_checking) return;
             _checking = true;
             _okReceived = false;
@@ -86,6 +110,8 @@ namespace FloodMonitor.ViewModels
         private bool _okReceived = false;
         private void ProcessCommand(string command)
         {
+            if (_port == null) return;
+
             if (command == "OK")
             {
                 _okReceived = true;
@@ -121,12 +147,12 @@ namespace FloodMonitor.ViewModels
             } else if (command.StartsWith("+CLIP:"))
                 _port.WriteLine("ATH");
             else if (command.StartsWith("+CMT: ")) //New message
-                parseSMS(command);
+                ParseSms(command);
         }
 
         private string GetNumber(string command)
         {
-            command = command.Substring(command.IndexOf("\""));
+            command = command.Substring(command.IndexOf("\"")+1);
             return command.Substring(0, command.IndexOf("\""));
         }
 
@@ -134,17 +160,50 @@ namespace FloodMonitor.ViewModels
         {
             public string Sender { get; set; }
             public string Message { get; set; }
+            public override string ToString()
+            {
+                return $"Message received from {Sender}\r{Message.Trim()}";
+            }
         }
 
-        private void parseSMS(string command)
+        private void ParseSms(string command)
         {
+            if (_port == null) return;
             var sms = new Sms()
             {
                 Sender = GetNumber(command),
                 Message = _port.ReadLine()
             };
-
+            var sensor = Sensor.Cache.FirstOrDefault(x => x.NumberEquals(sms.Sender));
+            if (sensor == null)
+            {
+                _context.Post(d =>
+                {
+                    _log.Add(new ModemLog()
+                    {
+                       Content = sms.ToString(),
+                       LogType = ModemLog.LogTypes.Sms
+                    });
+                },null);
+            }
+            else
+            {
+                ParseCommand(sensor, sms.Message);
+            }
             Messenger.Default.Broadcast(Messages.SmsReceived, sms);
+        }
+
+        private void ParseCommand(Sensor sensor, string command)
+        {
+            if (sensor==null || string.IsNullOrEmpty(command)) return;
+            if (command.StartsWith(".") && command.Length>=2)
+            {
+                var level = 0;
+                if (int.TryParse(command.Substring(1, 1), out level))
+                {
+                    sensor.SetLevel(level);
+                }
+            }
         }
 
         private async Task<bool> WaitOk()
@@ -163,7 +222,7 @@ namespace FloodMonitor.ViewModels
         {
             try
             {
-                _port = new SerialPort(port,9600);
+                _port = new SerialPort(port,115200);
                 _port.NewLine = "\r";
                 _port.DtrEnable = false;
                 _port.Open();
@@ -185,6 +244,13 @@ namespace FloodMonitor.ViewModels
             while (!found)
             {
                 var ports = GetAllPorts();
+
+                while (ports == null)
+                {
+                    await Task.Delay(1111);
+                    ports = GetAllPorts();
+                }
+
                 foreach (var port in ports)
                 {
                     found = Start(port);
@@ -194,6 +260,11 @@ namespace FloodMonitor.ViewModels
                         break;
                     }
                 }
+            }
+
+            if (_port == null)
+            {
+                return;
             }
 
             await Task.Delay(1111);
@@ -228,6 +299,23 @@ namespace FloodMonitor.ViewModels
             IsBooting = false;
         }
 
+        public async void SendMessage(string number, string message)
+        {
+            if (!IsOnline) return;
+
+            await Task.Factory.StartNew(async ()=>
+            {
+                pauseReading = true;
+                _port.WriteLine("AT");
+                await Task.Delay(111);
+                _port.WriteLine($"AT+CMGS=\"{number}\"");
+                _port.ReadLine();
+                _port.WriteLine(message);
+                _port.Write(new[]{(char)26},0,1);
+                pauseReading = false;
+            });
+        }
+        
         private string _Operator;
 
         public string Operator
@@ -254,29 +342,102 @@ namespace FloodMonitor.ViewModels
             }
         }
 
+        private ICommand _SendMessageCommand;
 
-
-        private ICommand _sendAtCommand;
-        public ICommand SendAtCommand => _sendAtCommand ?? (_sendAtCommand = new DelegateCommand<string>(cmd =>
-        {
-            //_port.WriteLine(cmd);
-            var rnd = new Random(DateTime.Now.Millisecond);
-            foreach (var sensor in Sensor.Cache)
+        public ICommand SendMessageCommand =>
+            _SendMessageCommand ?? (_SendMessageCommand = new DelegateCommand(d =>
             {
-                sensor.WaterLevels.Add(new WaterLevel(){DateTime = DateTime.Now.AddMinutes(-1),Level = rnd.Next(0,5)});
+                if (UseAtCommand)
+                {
+                    var msg = Message.Replace("^Z",$"{(char)26}");
+                    _port.WriteLine(msg);
+                }
+                else
+                {
+                    if (!SendTo.IsCellNumber()) return;
+                    if (string.IsNullOrEmpty(Message)) return;
+                    SendMessage(SendTo, Message);
+                }
+
+                Message = "";
+            },d=>!IsBooting));
+
+        private string _Message;
+
+        public string Message
+        {
+            get => _Message;
+            set
+            {
+                if (value == _Message) return;
+                _Message = value;
+                OnPropertyChanged(nameof(Message));
             }
-        },d=>(_port?.IsOpen??false) && !string.IsNullOrEmpty(d)));
+        }
+
+        private string _SendTo;
+
+        public string SendTo
+        {
+            get => _SendTo;
+            set
+            {
+                if (value == _SendTo) return;
+                _SendTo = value;
+                OnPropertyChanged(nameof(SendTo));
+            }
+        }
+
+        private string _AtCommand;
+
+        public string AtCommand
+        {
+            get => _AtCommand;
+            set
+            {
+                if (value == _AtCommand) return;
+                _AtCommand = value;
+                OnPropertyChanged(nameof(AtCommand));
+            }
+        }
+        
+        private ICommand _sendAtCommand;
+        public ICommand SendAtCommand => _sendAtCommand ?? (_sendAtCommand = new DelegateCommand(d =>
+        {
+            _port.WriteLine(AtCommand);
+            AtCommand = "";
+        },d=>(_port?.IsOpen??false) && !string.IsNullOrEmpty(AtCommand)));
+
+        private bool _UseAtCommand;
+        public bool UseAtCommand
+        {
+            get => _UseAtCommand;
+            set
+            {
+                if (value == _UseAtCommand) return;
+                _UseAtCommand = value;
+                OnPropertyChanged(nameof(UseAtCommand));
+                //Log.Refresh();
+            }
+        }
 
         private ListCollectionView _logView;
-
         public ListCollectionView Log
         {
             get
             {
                 if (_logView != null) return _logView;
                 _logView = (ListCollectionView) CollectionViewSource.GetDefaultView(_log);
+                _logView.Filter = FilterLog;
                 return _logView;
             }
+        }
+
+        private bool FilterLog(object obj)
+        {
+            if (UseAtCommand) return true;
+            if (!(obj is ModemLog l)) return false;
+            return l.LogType != ModemLog.LogTypes.AtCommand;
         }
 
         public IEnumerable<string> AllPorts => GetAllPorts();
@@ -321,7 +482,7 @@ namespace FloodMonitor.ViewModels
 
         public bool IsOnline
         {
-            get => _IsOnline;
+            get => _IsOnline && _port!=null;
             set
             {
                 if (value == _IsOnline) return;

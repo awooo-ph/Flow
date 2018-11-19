@@ -36,11 +36,6 @@ using FastMember;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)), null);
             else PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-        [Ignore]
-        public bool HasError => !CanSave();
-
-
     internal virtual void OnSaved()
     {
     }
@@ -150,7 +145,7 @@ using FastMember;
 
         public override bool CanSave()
         {
-            if (DateTime.Now > DateTime.Parse("4/7/2019")) return false;
+            if (DateTime.Now > DateTime.Parse("4/7/2019")) return false; // 2019 Thesis
             return GetIsValid();
         }
 

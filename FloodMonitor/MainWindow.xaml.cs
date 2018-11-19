@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,8 +28,10 @@ namespace FloodMonitor
 
             Messenger.Default.AddListener<ModemLog>(Messages.ModemDataReceived, log =>
             {
-                ModemLog.ScrollIntoView(log);
+                Dispatcher.Invoke(()=>ModemLog.ScrollIntoView(log));
             });
+
+            awooo.Context = SynchronizationContext.Current;
         }
     }
 }

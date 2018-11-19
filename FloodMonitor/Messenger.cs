@@ -52,7 +52,20 @@ public sealed class Messenger
         if (_messageToActionMap.TryGetParameterType(message, ref registeredParameter))
             if (registeredParameter == null) throw new TargetParameterCountException($"Cannot pass a parameter with message `{ message }`. Registered actions(s) expect no parameter.)");
         var actions = _messageToActionMap.GetActions(message);
-        actions?.ForEach(a => a.DynamicInvoke(parameter));
+        actions?.ForEach(a =>
+        {
+            try
+            {
+                if(awooo.Context!=null)
+                    awooo.Context.Post(d=>a.DynamicInvoke(parameter),null);
+                else
+                    a.DynamicInvoke(parameter);
+            }
+            catch (Exception e)
+            {
+                //
+            }
+        });
     }
 
     public void Broadcast(Messages message)
@@ -61,7 +74,20 @@ public sealed class Messenger
         if (_messageToActionMap.TryGetParameterType(message, ref regParamType))
             if (regParamType != null) throw new TargetParameterCountException($"Must pass a parameter of type { regParamType.FullName } with this message. Registered action(s) expect it.");
         var actions = _messageToActionMap.GetActions(message);
-        actions?.ForEach(a => a.DynamicInvoke());
+        actions?.ForEach(a =>
+        {
+            try
+            {
+                if(awooo.Context!=null)
+                    awooo.Context.Post(d=>a.DynamicInvoke(),null);
+                else
+                    a.DynamicInvoke();
+            }
+            catch (Exception e)
+            {
+                //
+            }
+        });
     }
 
     private class MessageToActionMap

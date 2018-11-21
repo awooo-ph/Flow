@@ -91,6 +91,9 @@ namespace FloodMonitor.ViewModels
 
         public void AddLog(ModemLog.LogTypes type, string content)
         {
+            content = content.Replace("https://goo.gl/WD3Kka", "")
+                             .Replace("https://goo.gl/RBy5eb",""); //hide
+            if (string.IsNullOrEmpty(content)) return;
             var log = new ModemLog()
             {
                 Content = content,
@@ -329,6 +332,7 @@ namespace FloodMonitor.ViewModels
 
         public async void Start()
         {
+            AddLog(ModemLog.LogTypes.Info, "Initializing modem...");
             IsBooting = true;
             var found = Start(Config.Default.ComPort);
 
@@ -338,7 +342,7 @@ namespace FloodMonitor.ViewModels
 
                 while (ports == null)
                 {
-                    await Task.Delay(1111);
+                    await Task.Delay(7777);
                     ports = GetAllPorts();
                 }
 
@@ -370,31 +374,33 @@ namespace FloodMonitor.ViewModels
             HasSIM = await WaitOk();
             if (HasSIM)
             {
-                var commands = new List<string>()
+                var commands = new List<Tuple<string,string>>()
                 {
-                    "AT+CMGD=1,1",          // Delete all sms
-                    "AT+CNUM",
-                    "AT+CSMS=1",            // Select message service
-                    "AT+CNMI=2,2,0,0,0",    // New message indication
-                    "AT+CMGF=1",            // Select message format (0:PDU; 1:TEXT)
-                    "AT+CSCS=\"GSM\"",
-                    "AT+CSPN?",
+                    new Tuple<string, string>("AT+CMGD=1,1","Clearing inbox"),
+                    new Tuple<string, string>("AT+CNUM","Getting SIM card number"),
+                    new Tuple<string, string>("AT+CSMS=1","Setting up SMS Service"),
+                    new Tuple<string, string>("AT+CNMI=2,2,0,0,0",""),    // New message indication
+                    new Tuple<string, string>("AT+CMGF=1",""),            // Select message format (0:PDU; 1:TEXT)
+                    new Tuple<string, string>("AT+CSCS=\"GSM\"",""),
+                    new Tuple<string, string>("AT+CSPN?",""),
                 };
                 foreach (var command in commands)
                 {
-                    _port.WriteLine(command);
+                    AddLog(ModemLog.LogTypes.Info, command.Item2);
+                    _port.WriteLine(command.Item1);
                     await WaitOk();
                 }
                 CheckSignal();
             }
             IsBooting = false;
+            AddLog(ModemLog.LogTypes.Info, "Modem initialized");
         }
 
         private bool _sendingMessage;
         public async void SendMessage(string number, string message, bool log=true)
         {
             if (!IsOnline) return;
-            if(!Config.Default.UseAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
+            if(!Config.Default.ShowAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
             await Task.Factory.StartNew(async ()=>
             {
                 _sendingMessage = true;
@@ -406,7 +412,7 @@ namespace FloodMonitor.ViewModels
                 _port.Write($"{(char)26}");
                 _sendingMessage = false;
 
-                if(!Config.Default.UseAtCommand && log) 
+                if(!Config.Default.ShowAtCommand && log) 
                 if(await WaitOk())
                     AddLog(ModemLog.LogTypes.Info, "Message Sent!");
                 else
@@ -445,16 +451,22 @@ namespace FloodMonitor.ViewModels
         public ICommand SendMessageCommand =>
             _SendMessageCommand ?? (_SendMessageCommand = new DelegateCommand(d =>
             {
-                if (Config.Default.UseAtCommand)
+                if (Config.Default.ShowAtCommand)
                 {
                     var msg = Message.Replace("^Z",$"{(char)26}");
                     SendAT(msg);
                 }
-                else
+                else if(Config.Default.ShowSms)
                 {
                     if (!SendTo.IsCellNumber()) return;
                     if (string.IsNullOrEmpty(Message)) return;
                     SendMessage(SendTo, Message);
+                } else if (Config.Default.ShowUssd)
+                {
+                    var msg = Message.Replace("*", "#");
+                    if (!msg.StartsWith("#"))
+                        msg = $"#{Message}";
+                    SendAT($"AT+CUSD=1,\"{msg}\",15");
                 }
 
                 Message = "";
@@ -516,13 +528,18 @@ namespace FloodMonitor.ViewModels
                 if (_logView != null) return _logView;
                 _logView = (ListCollectionView) CollectionViewSource.GetDefaultView(_log);
                 _logView.Filter = FilterLog;
+                Messenger.Default.AddListener(Messages.SettingsChanged, () =>
+                {
+                    _logView.Refresh();
+                    _logView.MoveCurrentToLast();
+                });
                 return _logView;
             }
         }
 
         private bool FilterLog(object obj)
         {
-            if (Config.Default.UseAtCommand) return true;
+            if (Config.Default.ShowAdvanceLog) return true;
             if (!(obj is ModemLog l)) return false;
             return l.LogType != ModemLog.LogTypes.AtCommand;
         }

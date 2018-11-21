@@ -103,8 +103,14 @@
     </Compile>
     <Compile Include="Messages.cs" />
     <Compile Include="Messenger.cs" />
+    <Compile Include="ModemSettings.xaml.cs">
+      <DependentUpon>ModemSettings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="NewSensorDialog.xaml.cs">
       <DependentUpon>NewSensorDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SensorSettings.xaml.cs">
+      <DependentUpon>SensorSettings.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\ModemLog.cs" />
@@ -115,6 +121,9 @@
     <Compile Include="ViewModels\Sensor.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\WaterLevel.cs" />
+    <Compile Include="Window1.xaml.cs">
+      <DependentUpon>Window1.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -131,7 +140,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="ModemSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="NewSensorDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SensorSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Window1.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

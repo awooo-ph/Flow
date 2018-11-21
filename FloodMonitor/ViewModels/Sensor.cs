@@ -26,8 +26,8 @@ namespace FloodMonitor.ViewModels
                 _AllView = (ListCollectionView) CollectionViewSource.GetDefaultView(Cache);
                 _AllView.LiveFilteringProperties.Add(nameof(IsDeleted));
                 _AllView.IsLiveFiltering = true;
-                _AllView.SortDescriptions.Add(new SortDescription(nameof(SensorName), ListSortDirection.Ascending));
-                _AllView.LiveSortingProperties.Add(nameof(SensorName));
+                _AllView.SortDescriptions.Add(new SortDescription(nameof(Order), ListSortDirection.Ascending));
+                _AllView.LiveSortingProperties.Add(nameof(Order));
                 _AllView.Filter = o => !((Sensor) o).IsDeleted;
 
                 Task.Factory.StartNew(async () =>
@@ -112,6 +112,19 @@ namespace FloodMonitor.ViewModels
             }
         }
 
+        private long _Order = 0;
+
+        public long Order
+        {
+            get => _Order>0?_Order:Id;
+            set
+            {
+                if (value == _Order) return;
+                _Order = value;
+                OnPropertyChanged(nameof(Order));
+            }
+        }
+        
         public bool IsWarning => WarningLevel>0 && WaterLevel >= WarningLevel;
         
         private int _WaterLevel;
@@ -177,22 +190,25 @@ namespace FloodMonitor.ViewModels
             Charting.For<WaterLevel>(mapper);
             LabelFormatter = v =>
             {
-                if ((int) v == 0) return "";
-                return _levels.Skip((int)v).FirstOrDefault()?.DateTime.ToString("MMM d h:mm tt");
-                //return ViewModels.WaterLevel.GetById((long) v)?.DateTime.ToShortDateString();
-                //return new DateTime((long) v).ToString("M/d/yy h:m A");
+                if ((ViewModels.WaterLevel.Cache.FirstOrDefault()?.Id??0) == (long) v) return "";
+                var level = ViewModels.WaterLevel.Cache.FirstOrDefault(x => x.Id == (long) v);
+                return level?.DateTime.ToString("MMM d h:mm tt");
             };
         }
 
-        private ChartValues<int> _waterLevels;
-        private List<WaterLevel> _levels;// = new List<WaterLevel>();
-        public ChartValues<int> WaterLevels
+        private ChartValues<WaterLevel> _waterLevels;
+        //private List<WaterLevel> _levels;// = new List<WaterLevel>();
+        public ChartValues<WaterLevel> WaterLevels
         {
             get
             {
                 if (_waterLevels != null) return _waterLevels;
-                _levels = ViewModels.WaterLevel.Cache.Where(x => x.SensorId == Id).ToList();
-                _waterLevels = new ChartValues<int>(_levels.Select(x=>x.Level));
+                _waterLevels = new ChartValues<WaterLevel>();
+                _waterLevels.AddRange(ViewModels.WaterLevel.Cache
+                    .Where(x => x.SensorId == Id)
+                    .OrderByDescending(x=>x.Id)
+                    .Take(10).ToList());//.Select(x=>x.Level * 1.0));
+                LatestLevel = _waterLevels.Last();
                 if (_waterLevels.Count == 0)
                 {
                     SetLevel(0);
@@ -202,22 +218,15 @@ namespace FloodMonitor.ViewModels
             }
         }
 
+        public void ResetLevels()
+        {
+            _waterLevels = null;
+            OnPropertyChanged(nameof(WaterLevels));
+        }
+
         [Ignore]
         public Func<double, string> LabelFormatter { get; set; }
-
-        //[Ignore]
-        //public long ChartStep
-        //{
-        //    get
-        //    {
-        //        if (WaterLevels.Count > 0)
-        //        {
-        //            return TimeSpan.FromMinutes(30).Ticks;
-        //        }
-        //        return 1;
-        //    }
-        //} 
-
+        
         private string _LastHeartBeatText;
         [Ignore]
         public string LastHeartBeatText
@@ -393,6 +402,19 @@ namespace FloodMonitor.ViewModels
             base.OnSaved();
         }
 
+        private WaterLevel _LatestLevel;
+        [Ignore]
+        public WaterLevel LatestLevel
+        {
+            get => _LatestLevel;
+            set
+            {
+                if (value == _LatestLevel) return;
+                _LatestLevel = value;
+                OnPropertyChanged(nameof(LatestLevel));
+            }
+        }
+        
         public void SetLevel(int level)
         {
             awooo.Context.Post(d=>{
@@ -405,10 +427,8 @@ namespace FloodMonitor.ViewModels
                 WaterLevel = level;
                 LastHeartBeat = DateTime.Now;
                 Save();
-                //WaterLevels.Add(newLevel);
-                _levels.Add(newLevel);
-                WaterLevels.Add(level);
-                //OnPropertyChanged(nameof(ChartStep));
+                LatestLevel = newLevel;
+                WaterLevels.Add(newLevel);
             },null);
         }
     }

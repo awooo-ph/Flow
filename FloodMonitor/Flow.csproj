@@ -109,9 +109,6 @@
     </Compile>
     <Compile Include="Messages.cs" />
     <Compile Include="Messenger.cs" />
-    <Compile Include="ModemSettings.xaml.cs">
-      <DependentUpon>ModemSettings.xaml</DependentUpon>
-    </Compile>
     <Compile Include="NewSensorDialog.xaml.cs">
       <DependentUpon>NewSensorDialog.xaml</DependentUpon>
     </Compile>
@@ -144,10 +141,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="MessageDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ModemSettings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

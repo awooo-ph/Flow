@@ -363,37 +363,46 @@ namespace FloodMonitor.ViewModels
             }
 
             await Task.Delay(1111);
-            
-            while (!IsOnline)
-            {
-                _port.WriteLine("AT");
-                await WaitOk();
-            }
 
-            _port.WriteLine("AT+CPIN?");
-            HasSIM = await WaitOk();
-            if (HasSIM)
+            try
             {
-                var commands = new List<Tuple<string,string>>()
+                while (!IsOnline)
                 {
-                    new Tuple<string, string>("AT+CMGD=1,1","Clearing inbox"),
-                    new Tuple<string, string>("AT+CNUM","Getting SIM card number"),
-                    new Tuple<string, string>("AT+CSMS=1","Setting up SMS Service"),
-                    new Tuple<string, string>("AT+CNMI=2,2,0,0,0",""),    // New message indication
-                    new Tuple<string, string>("AT+CMGF=1",""),            // Select message format (0:PDU; 1:TEXT)
-                    new Tuple<string, string>("AT+CSCS=\"GSM\"",""),
-                    new Tuple<string, string>("AT+CSPN?",""),
-                };
-                foreach (var command in commands)
-                {
-                    AddLog(ModemLog.LogTypes.Info, command.Item2);
-                    _port.WriteLine(command.Item1);
+                    _port.WriteLine("AT");
                     await WaitOk();
                 }
-                CheckSignal();
+
+                _port.WriteLine("AT+CPIN?");
+                HasSIM = await WaitOk();
+                if (HasSIM)
+                {
+                    var commands = new List<Tuple<string, string>>()
+                    {
+                        new Tuple<string, string>("AT+CMGD=1,1","Clearing inbox"),
+                        new Tuple<string, string>("AT+CNUM","Getting SIM card number"),
+                        new Tuple<string, string>("AT+CSMS=1","Setting up SMS Service"),
+                        new Tuple<string, string>("AT+CNMI=2,2,0,0,0",""),    // New message indication
+                        new Tuple<string, string>("AT+CMGF=1",""),            // Select message format (0:PDU; 1:TEXT)
+                        new Tuple<string, string>("AT+CSCS=\"GSM\"",""),
+                        new Tuple<string, string>("AT+CSPN?",""),
+                    };
+                    foreach (var command in commands)
+                    {
+                        AddLog(ModemLog.LogTypes.Info, command.Item2);
+                        _port.WriteLine(command.Item1);
+                        await WaitOk();
+                    }
+                    CheckSignal();
+                }
+                IsBooting = false;
+                AddLog(ModemLog.LogTypes.Info, "Modem initialized");
             }
-            IsBooting = false;
-            AddLog(ModemLog.LogTypes.Info, "Modem initialized");
+            catch (Exception)
+            {
+                AddLog(ModemLog.LogTypes.Error,"An error occured while initializing modem.");
+                AddLog(ModemLog.LogTypes.Error,"Trying again...");
+                Start();
+            }
         }
 
         private bool _sendingMessage;

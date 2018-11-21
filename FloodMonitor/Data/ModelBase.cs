@@ -199,7 +199,11 @@ using FastMember;
         {
             if (!CanSave()) return;
             Db.Save((T)this);
-            if (Cache.Contains((T) this)) return;
+            if (Cache.Contains((T) this))
+            {
+                OnSaved();
+                return;
+            }
             
             if (awooo.Context != null)
                 awooo.Context.Post(d => Cache.Add((T) this), null);

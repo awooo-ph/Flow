@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Dragablz;
 using FloodMonitor.ViewModels;
 
 namespace FloodMonitor
@@ -26,16 +27,31 @@ namespace FloodMonitor
         {
             InitializeComponent();
 
-            Messenger.Default.AddListener<ModemLog>(Messages.ModemDataReceived, log =>
-            {
-                Dispatcher.Invoke(()=>ModemLog.ScrollIntoView(log));
-            });
-            Modem.Instance.Log.CurrentChanged += (sender, args) =>
-            {
-                if(Modem.Instance.Log.CurrentItem!=null)
-                ModemLog.ScrollIntoView(Modem.Instance.Log.CurrentItem);
-            };
+           
             awooo.Context = SynchronizationContext.Current;
+
+            AddHandler(DragablzItem.DragCompleted, new DragablzDragCompletedEventHandler(ItemDragCompleted), true);        
+        }
+
+        private object[] _order;
+        
+        private void ItemDragCompleted(object sender, DragablzDragCompletedEventArgs e)
+        {
+            var item = e.DragablzItem.DataContext;
+            
+            if (_order == null) return;
+
+            for(var i=0L;i < _order.Length;i++)
+            {
+                var sensor = ((Sensor) _order[i]);
+                if(sensor.Order!=i+1)
+                    sensor.Update(nameof(sensor.Order),i+1);
+            }
+        }
+
+        private void StackPositionMonitor_OnOrderChanged(object sender, OrderChangedEventArgs e)
+        {
+            _order = e.NewOrder;
         }
     }
 }

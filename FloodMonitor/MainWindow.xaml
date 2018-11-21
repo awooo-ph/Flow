@@ -24,105 +24,7 @@
     <md:DialogHost Identifier="Root">
       <md:DrawerHost IsRightDrawerOpen="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSensorSettings}">
         <md:DrawerHost.RightDrawerContent>
-          <Grid DataContext="{Binding Source={x:Static viewModels:MainViewModel.Instance}}">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="*"/>
-              <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid Margin="10">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <md:PackIcon Kind="Settings" Height="44" Width="44" Margin="0"/>
-              <TextBlock Style="{DynamicResource MaterialDesignHeadlineTextBlock}"
-                       Margin="10 10 47 10"
-                       VerticalAlignment="Center"
-                       Grid.Column="1">
-              <Run Text="{Binding SelectedSensor.SensorName}"/><Run Text=" SETTINGS"/>
-              </TextBlock>
-              <Button Grid.Column="2"
-                    Content="{md:PackIcon Close}"
-                    Command="{Binding HideSensorSettingsCommand}"
-                    Margin="0"
-                    VerticalAlignment="Top"
-                    Style="{DynamicResource MaterialDesignFlatButton}"/>
-            </Grid>
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-              <StackPanel DataContext="{Binding SelectedSensor}"
-                      Grid.Row="1">
-                <Grid Margin="20">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <StackPanel VerticalAlignment="Center">
-                    <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                           Text="SIREN 1"/>
-                    <TextBlock Text="Water level to activate Siren 1" Opacity="0.7"/>
-                  </StackPanel>
-                  <TextBox Text="{Binding Siren1,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
-                       Grid.Column="1"
-                       VerticalAlignment="Center"
-                       md:HintAssist.Hint="WATER LEVEL"
-                       md:HintAssist.IsFloating="True"/>
-                </Grid>
-                <Grid Margin="20">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <StackPanel VerticalAlignment="Center">
-                    <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                           Text="SIREN 2"/>
-                    <TextBlock Text="Water level to activate Siren 2" Opacity="0.7"/>
-                  </StackPanel>
-                  <TextBox Text="{Binding Siren2,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
-                       Grid.Column="1"
-                       VerticalAlignment="Center"
-                       md:HintAssist.Hint="WATER LEVEL"
-                       md:HintAssist.IsFloating="True"/>
-                </Grid>
-                <Grid Margin="20">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <StackPanel VerticalAlignment="Center">
-                    <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                           Text="SIREN 3"/>
-                    <TextBlock Text="Water level to activate Siren 3" Opacity="0.7"/>
-                  </StackPanel>
-                  <TextBox Text="{Binding Siren3,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
-                       Grid.Column="1"
-                       VerticalAlignment="Center"
-                       md:HintAssist.Hint="WATER LEVEL"
-                       md:HintAssist.IsFloating="True"/>
-                </Grid>
-              </StackPanel>
-            </ScrollViewer>
-            <UniformGrid Grid.Row="2" HorizontalAlignment="Right"
-                       Rows="1"
-                       Margin="10">
-              <Button Content="_SAVE CHANGES" Command="{Binding SelectedSensor.SaveCommand}"/>
-            </UniformGrid>
-
-            <Grid Grid.Row="2" Margin="10" HorizontalAlignment="Left"
-                Visibility="{Binding SelectedSensor.SettingsSaved,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
-              <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedSensor.SettingsSent,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
-                <md:PackIcon Kind="Alert" VerticalAlignment="Center"/>
-                <TextBlock Text="  Changes are not saved!" VerticalAlignment="Center"/>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedSensor.SettingsSent,Converter={converters:BooleanToVisibility Collapsed,Visible}}">
-                <ProgressBar Style="{DynamicResource MaterialDesignCircularProgressBar}"
-                           IsIndeterminate="True"/>
-                <TextBlock Text="   Sending changes to sensor..." VerticalAlignment="Center"/>
-              </StackPanel>
-            </Grid>
-
-          </Grid>
+          <local:SensorSettings/>
         </md:DrawerHost.RightDrawerContent>
         <Grid>
           <Grid.ColumnDefinitions>
@@ -142,8 +44,8 @@
                SnapsToDevicePixels="True"
                UseLayoutRounding="True"/>
 
-          <Grid Grid.Row="1"
-          Grid.Column="0">
+          <!--Sidebar-->
+          <Grid Grid.Row="1" Grid.Column="0">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
@@ -246,44 +148,73 @@
               </ListBox.ItemTemplate>
             </ListBox>
 
-            <Grid Grid.Row="2" Margin="10" IsEnabled="{Binding IsOnline}"
+            <Grid Grid.Row="2" >
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+              <Rectangle Fill="{DynamicResource MaterialDesignDivider}" Height="1" SnapsToDevicePixels="True"
+                         VerticalAlignment="Bottom"/>
+              <UniformGrid Grid.Row="0" Rows="1" DataContext="{Binding Source={x:Static local:Config.Default}}">
+                <RadioButton Content="SMS" Style="{DynamicResource MaterialDesignTabRadioButton}"
+                             IsChecked="{Binding ShowSms}"/>
+                <RadioButton Content="USSD" Style="{DynamicResource MaterialDesignTabRadioButton}"
+                             IsChecked="{Binding ShowUssd}"/>
+                <RadioButton Content="AT" Style="{DynamicResource MaterialDesignTabRadioButton}"
+                             IsChecked="{Binding ShowAtCommand}"/>
+              </UniformGrid>
+              
+              <Grid Grid.Row="1" Margin="10" IsEnabled="{Binding IsOnline}"
               DataContext="{Binding Source={x:Static viewModels:Modem.Instance}}">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <ComboBox IsEditable="True" md:HintAssist.Hint="NUMBER" md:HintAssist.IsFloating="False"
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="2*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox IsEditable="True" md:HintAssist.Hint="NUMBER" md:HintAssist.IsFloating="False"
                     Margin="0 0 10 0"
                     MaxWidth="117"
-                    Visibility="{Binding UseAtCommand,Converter={converters:BooleanToVisibility Collapsed,Visible},Source={x:Static local:Config.Default}}"
+                    Visibility="{Binding ShowSms,Converter={converters:BooleanToVisibility},Source={x:Static local:Config.Default}}"
                     ItemsSource="{Binding Source={x:Static viewModels:Sensor.AllView}}"
                     Text="{Binding SendTo,UpdateSourceTrigger=PropertyChanged}"
                     SelectedValuePath="Number">
-                <ComboBox.ItemTemplate>
-                  <DataTemplate DataType="{x:Type viewModels:Sensor}">
-                    <StackPanel>
-                      <TextBlock Text="{Binding SensorName}" FontWeight="Bold"/>
-                      <TextBlock Text="{Binding Number}"/>
-                    </StackPanel>
-                  </DataTemplate>
-                </ComboBox.ItemTemplate>
-              </ComboBox>
-              <TextBox Grid.Column="1" Text="{Binding Message,UpdateSourceTrigger=PropertyChanged}"
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:Sensor}">
+                      <StackPanel>
+                        <TextBlock Text="{Binding SensorName}" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Number}"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBox Grid.Column="1" Text="{Binding Message,UpdateSourceTrigger=PropertyChanged}"
                    x:Name="MessageBox"
-                   md:HintAssist.Hint="{Binding UseAtCommand,Converter={converters:BooleanToObject {}AT\ COMMAND,{}MESSAGE},Source={x:Static local:Config.Default}}" md:HintAssist.IsFloating="False"/>
-              <Button Grid.Column="2" Content="{md:PackIcon Send}"
+                   md:HintAssist.IsFloating="False">
+                  <md:HintAssist.Hint>
+                    <Grid DataContext="{Binding Source={x:Static local:Config.Default}}">
+                      <TextBlock Text="MESSAGE" Visibility="{Binding ShowSms,Converter={converters:BooleanToVisibility}}"/>
+                      <TextBlock Text="USSD CODE" Visibility="{Binding ShowUssd,Converter={converters:BooleanToVisibility}}"/>
+                      <TextBlock Text="AT COMMAND" Visibility="{Binding ShowAtCommand,Converter={converters:BooleanToVisibility}}"/>
+                    </Grid>
+                  </md:HintAssist.Hint>
+                </TextBox>
+                <Button Grid.Column="2" Content="{md:PackIcon Send}"
                   Style="{DynamicResource MaterialDesignToolButton}"
                 Command="{Binding SendMessageCommand}"
                 IsDefault="{Binding ElementName=MessageBox,Path=IsFocused}">
-              </Button>
+                </Button>
+              </Grid>
             </Grid>
 
             <Rectangle Grid.Row="2" Height="1" VerticalAlignment="Top" IsHitTestVisible="False"
                    Fill="{DynamicResource MaterialDesignDivider}"/>
 
-            <Grid Grid.Row="1" Grid.RowSpan="2" Visibility="{Binding ElementName=Expander,Path=IsExpanded,Converter={converters:BooleanToVisibility}}"
+            <Grid Grid.Row="1" Grid.RowSpan="1" Visibility="{Binding ElementName=Expander,Path=IsExpanded,Converter={converters:BooleanToVisibility}}"
               Background="{DynamicResource MaterialDesignPaper}">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
               <ScrollViewer Focusable="False" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                   <Grid Margin="20">
@@ -308,29 +239,65 @@
                       VerticalAlignment="Top"
                       Text="{Binding Source={x:Static local:Config.Default},Path=ComPort}"/>
                   </Grid>
-                  <Grid Margin="20 0 20 20">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="Auto"/>
-                      <ColumnDefinition Width="*"/>
-                      <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                      <TextBlock Text="ADVANCE COMMANDS" VerticalAlignment="Center"
-                             Style="{DynamicResource MaterialDesignTitleTextBlock}"/>
-                      <TextBlock Text="Send AT commands to the modem."
-                             Opacity="0.7"
-                             TextWrapping="Wrap"/>
-                    </StackPanel>
-                    <ToggleButton Grid.Column="2"
-                              IsChecked="{Binding Source={x:Static local:Config.Default},Path=UseAtCommand}"
-                              Style="{DynamicResource MaterialDesignSwitchToggleButton}"
-                          Margin="10 10 0 0"
-                              ToolTip="Enable/disable advance commands."
-                          VerticalAlignment="Top"/>
-                  </Grid>
+                  <ListBoxItem Padding="0"
+                               HorizontalContentAlignment="Stretch">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                      </Grid.ColumnDefinitions>
+                      <md:Transitioner SelectedIndex="{Binding ShowAdvanceLog,Source={x:Static local:Config.Default},Converter={converters:BooleanToObject 0,1}}"
+                                       Margin="0 20 20 20"
+                                       Grid.Column="1">
+                        <md:Transitioner.ItemContainerStyle>
+                          <Style TargetType="md:TransitionerSlide">
+                            <Setter Property="ForwardWipe">
+                              <Setter.Value>
+                                <md:FadeWipe/>
+                              </Setter.Value>
+                            </Setter>
+                            <Setter Property="BackwardWipe">
+                              <Setter.Value>
+                                <md:FadeWipe/>
+                              </Setter.Value>
+                            </Setter>
+                          </Style>
+                        </md:Transitioner.ItemContainerStyle>
+                        <md:TransitionerSlide>
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock Text="ADVANCE LOG" VerticalAlignment="Center"
+                                     Style="{DynamicResource MaterialDesignTitleTextBlock}"/>
+                          <TextBlock Text="Show advance log."
+                                     Opacity="0.7"
+                                     TextWrapping="Wrap"/>
+                        </StackPanel>
+                        </md:TransitionerSlide>
+                        <md:TransitionerSlide>
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock Text="BASIC LOG" VerticalAlignment="Center"
+                                     Style="{DynamicResource MaterialDesignTitleTextBlock}"/>
+                          <TextBlock Text="Show basic log."
+                                     Opacity="0.7"
+                                     TextWrapping="Wrap"/>
+                        </StackPanel>
+                        </md:TransitionerSlide>
+                      </md:Transitioner>
 
+                      <ToggleButton IsChecked="{Binding ShowAdvanceLog,Source={x:Static local:Config.Default}}"
+                                    Content="{md:PackIcon InformationVariant}"
+                                    md:ToggleButtonAssist.OnContent="{md:PackIcon Console}"
+                                    Style="{DynamicResource MaterialDesignActionToggleButton}"
+                                Grid.Column="0"
+                                Margin="20 0 10 0"
+                                VerticalAlignment="Center"/>
+                      <Button Grid.Column="0" Grid.ColumnSpan="2" Style="{DynamicResource MaterialDesignToolButton}"
+                              Height="Auto" VerticalAlignment="Stretch"
+                              Command="{Binding ToggleLogCommand,Source={x:Static local:Config.Default}}"/>
+                    </Grid>
+                  </ListBoxItem>
                 </StackPanel>
               </ScrollViewer>
+             
             </Grid>
           </Grid>
 
@@ -343,6 +310,7 @@
             </Image.RenderTransform>
           </Image>
 
+          <!-- Sensors -->
           <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
             <Rectangle Fill="{DynamicResource MaterialDesignDivider}" Opacity="0.4"/>
 
@@ -358,6 +326,7 @@
                           <ColumnDefinition Width="*"/>
                           <ColumnDefinition Width="Auto" MinWidth="74"/>
                         </Grid.ColumnDefinitions>
+
                         <lv:CartesianChart Opacity="0.7" Margin="7 10 0 0" Pan="X">
                           <lv:CartesianChart.AxisY>
                             <lv:Axis MaxValue="7" MinValue="-1">
@@ -366,18 +335,19 @@
                               </lv:Axis.Separator>
                             </lv:Axis>
                           </lv:CartesianChart.AxisY>
-                          <lv:CartesianChart.AxisX>
+                          <!--<lv:CartesianChart.AxisX>
                             <lv:Axis LabelFormatter="{Binding LabelFormatter}"
-                                 Separator="{x:Static lv:DefaultAxes.CleanSeparator}"/>
-                          </lv:CartesianChart.AxisX>
+                                     Separator="{x:Static lv:DefaultAxes.CleanSeparator}"/>
+                          </lv:CartesianChart.AxisX>-->
                           <lv:CartesianChart.Series>
-                            <lv:LineSeries Values="{Binding WaterLevels}" PointGeometry="{x:Null}" Title="LEVEL"/>
+                            <lv:LineSeries Values="4,2,4,5,6,4,1,2,4,3,2,1" PointGeometry="{x:Null}" Title="LEVEL"/>
                           </lv:CartesianChart.Series>
                         </lv:CartesianChart>
-
+                        
                         <Grid VerticalAlignment="Top"
                           IsHitTestVisible="False"
                           Grid.ColumnSpan="2"
+                              Grid.Column="0"
                           HorizontalAlignment="Left">
                           <Rectangle Fill="{DynamicResource MaterialDesignPaper}" Opacity="0.7"/>
                           <StackPanel Margin="40 10">
@@ -463,10 +433,11 @@
               Margin="20"/>
           </Grid>
 
-
+        
         </Grid>
       </md:DrawerHost>
     </md:DialogHost>
+
     <md:Snackbar VerticalAlignment="Bottom" HorizontalAlignment="Center"
                  MessageQueue="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=MessageQueue}"/>
   </Grid>

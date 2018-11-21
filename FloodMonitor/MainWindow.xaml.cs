@@ -30,7 +30,11 @@ namespace FloodMonitor
             {
                 Dispatcher.Invoke(()=>ModemLog.ScrollIntoView(log));
             });
-
+            Modem.Instance.Log.CurrentChanged += (sender, args) =>
+            {
+                if(Modem.Instance.Log.CurrentItem!=null)
+                ModemLog.ScrollIntoView(Modem.Instance.Log.CurrentItem);
+            };
             awooo.Context = SynchronizationContext.Current;
         }
     }

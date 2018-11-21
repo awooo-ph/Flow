@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using FloodMonitor.ViewModels;
 using Jot;
 using Jot.DefaultInitializer;
@@ -43,20 +44,78 @@ namespace FloodMonitor
             }
         }
 
-        private bool _UseAtCommand;
+        private bool _showAtCommand;
         [Trackable]
-        public bool UseAtCommand
+        public bool ShowAtCommand
         {
-            get => _UseAtCommand;
+            get => _showAtCommand;
             set
             {
-                if (value == _UseAtCommand) return;
-                _UseAtCommand = value;
-                OnPropertyChanged(nameof(UseAtCommand));
+                if (value == _showAtCommand) return;
+                _showAtCommand = value;
+                _ShowSms = false;
+                _ShowUssd = false;
+                OnPropertyChanged(nameof(ShowSms));
+                OnPropertyChanged(nameof(ShowUssd));
+                OnPropertyChanged(nameof(ShowAtCommand));
                 //Log.Refresh();
             }
         }
 
+        private bool _ShowUssd;
+        [Trackable]
+        public bool ShowUssd
+        {
+            get => _ShowUssd;
+            set
+            {
+                if (value == _ShowUssd) return;
+                _ShowUssd = value;
+                _showAtCommand = false;
+                _ShowSms = false;
+                OnPropertyChanged(nameof(ShowSms));
+                OnPropertyChanged(nameof(ShowAtCommand));
+                OnPropertyChanged(nameof(ShowUssd));
+            }
+        }
+
+        private bool _ShowSms;
+        [Trackable]
+        public bool ShowSms
+        {
+            get => _ShowSms;
+            set
+            {
+                if (value == _ShowSms) return;
+                _ShowSms = value;
+                _showAtCommand = false;
+                _ShowUssd = false;
+                OnPropertyChanged(nameof(ShowUssd));
+                OnPropertyChanged(nameof(ShowAtCommand));
+                OnPropertyChanged(nameof(ShowSms));
+            }
+        }
+
+        private bool _ShowAdvanceLog;
+        [Trackable]
+        public bool ShowAdvanceLog
+        {
+            get => _ShowAdvanceLog;
+            set
+            {
+                if (value == _ShowAdvanceLog) return;
+                _ShowAdvanceLog = value;
+                OnPropertyChanged(nameof(ShowAdvanceLog));
+                Messenger.Default.Broadcast(Messages.SettingsChanged);
+            }
+        }
+
+        private ICommand _ToggleLogCommand;
+
+        public ICommand ToggleLogCommand => _ToggleLogCommand ?? (_ToggleLogCommand = new DelegateCommand(d =>
+        {
+            ShowAdvanceLog = !ShowAdvanceLog;
+        }));
 
     }
 }

@@ -3,5 +3,6 @@
     {
         None = 0,
         ModemDataReceived,
-        SmsReceived
+        SmsReceived,
+        SettingsChanged
     }

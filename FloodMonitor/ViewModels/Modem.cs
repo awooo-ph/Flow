@@ -91,8 +91,7 @@ namespace FloodMonitor.ViewModels
 
         public void AddLog(ModemLog.LogTypes type, string content)
         {
-            content = content.Replace("https://goo.gl/WD3Kka", "")
-                             .Replace("https://goo.gl/RBy5eb",""); //hide
+            content = content.Replace("https://goo.gl/RBy5eb",""); //hide
             if (string.IsNullOrEmpty(content)) return;
             var log = new ModemLog()
             {

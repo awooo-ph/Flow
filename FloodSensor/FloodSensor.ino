@@ -1,11 +1,10 @@
 #define USE_LCD
-//define USE_7_SEGMENTS
 
 #define VERSION "1.0.0-a"
 #define SIREN_POWER 7
 #define SIGNAL_BARS 4
-#define GSM_RX 11
-#define GSM_TX 12
+#define GSM_RX 8
+#define GSM_TX 9
 
 #include <Arduino.h>
 #include "Settings.h"
@@ -14,10 +13,6 @@
 
 #ifdef USE_LCD
 #include "Display.h"
-#endif
-
-#ifdef USE_7_SEGMENTS
-#include <TM1637Display.h>
 #endif
 
 WaterLevel river;
@@ -29,34 +24,9 @@ DisplayClass lcd(0x27);
 
 uint8_t SirenPIN[3] = { 4,5,6 };
 
-#ifdef USE_7_SEGMENTS
-const uint8_t LED_R = SEG_E | SEG_G;
-const uint8_t LED_A = LED_R | SEG_A | SEG_F | SEG_B | SEG_C;
-const uint8_t LED_L = SEG_F | SEG_E | SEG_D;
-const uint8_t LED_C = LED_L | SEG_A;
-const uint8_t LED_o = SEG_C | SEG_D | SEG_E | SEG_G;
-const uint8_t LED_d = LED_o | SEG_B;
-const uint8_t LED_E = LED_C | SEG_G;
-const uint8_t LED_N = LED_R | SEG_C;
-const uint8_t LED_S = SEG_A | SEG_F | SEG_G | SEG_C | SEG_D;
-const uint8_t LED_i = SEG_E;
-const uint8_t LED_G = LED_C | SEG_C;
-
-uint8_t LED_ERROR[] = { LED_E,LED_R,LED_R,0 };
-const uint8_t LED_GOOD[] = { LED_G,LED_o,LED_o,LED_d };
-const uint8_t LED_LOAD[] = { LED_L,LED_o,LED_A,LED_d };
-const uint8_t LED_CARD[] = { LED_C,LED_A,LED_R,LED_d };
-const uint8_t LED_BLANK[] = { 0,0,0,0 };
-const uint8_t LED_NO[] = { 0,LED_N,LED_o,0 };
-
-TM1637Display display(8, 9);
-#endif
-
 void OnWaterLevelChanged(uint8_t level)
 {
-#ifdef USE_LCD
     lcd.setLevel(level);
-#endif
 
     digitalWrite(SIREN_POWER, HIGH);
     if (level == 0) return;
@@ -89,67 +59,16 @@ void OnWaterLevelChanged(uint8_t level)
     }
 }
 
-void onReceive(char* number, char* message)
+void SignalChanged(int signal)
 {
+    lcd.setSignal(signal);
+}
 
-    switch (message[0]) {
-    case '?':
-
-        if (Sms.startSend(number)) return;
-        Sms.write("!");
-        Sms.write(message[1]);
-        switch (message[1])
-        {
-        case 'v':
-            Sms.write(VERSION);
-            break;
-        case 'n':
-            Sms.write(Settings.Current.SensorName);
-            break;
-        case 'i':
-            Sms.write(Sms.getIMEI());
-            break;
-        case 's':
-            for(auto i=0;i<3;i++)
-                Sms.write(Settings.Current.SirenLevel[i]-'0');
-        default:
-            Sms.write(message[1]);
-        }
-        Sms.commitSend();
-        break;
-    case '=':
-        auto ci=0;
-        auto vi=0;
-        char value[74];
-        for (auto i = 1; i < strlen(message); i++)
-        {
-            if(message[i]==',')
-            {
-                value[vi]='\0';
-                if(ci==0)
-                {
-                    message[47-1] = '\0';
-                    strcpy(Settings.Current.SensorName,value);
-                } else if(ci==1)
-                {
-                    Settings.Current.SirenLevel[0] = value[0];
-                } else if(ci==2)
-                    Settings.Current.SirenLevel[1] = value[1];
-                else if(ci==3)
-                    Settings.Current.SirenLevel[2] = value[2];
-                vi=0;
-                ci++;
-            }
-            value[vi]=message[i];
-            vi++;
-        }
-
-        Settings.SaveConfig();
-
-        Sms.send(number,"==");
-        break;
-    default:;
-    }
+void SimNumberChanged()
+{
+    char number[15];
+    Sms.getNumber(number);
+    lcd.setDescription(number);
 }
 
 bool showSignal = true;
@@ -157,39 +76,9 @@ bool displayOff = true;
 unsigned long lastDisplayUpdate = 0;
 uint8_t displayCount = 0;
 
-#ifdef USE_7_SEGMENTS
-void updateDisplay()
-{
-    if (millis() - lastDisplayUpdate < 1111) return;
-    lastDisplayUpdate = millis();
-
-    uint8_t data[4] = { 0,0,0,0 };
-    if (displayOff)
-    {
-        if (showSignal)
-        {
-            data[0] = LED_L;
-            data[3] = display.encodeDigit(river.getLevel());
-        }
-        else
-        {
-            data[0] = LED_S;
-            data[3] = display.encodeDigit(Sms.getSignal());
-        }
-        displayCount++;
-        if (displayCount == 7)
-        {
-            showSignal = !showSignal;
-            displayCount = 0;
-        }
-    }
-    displayOff = !displayOff;
-    display.setSegments(data);
-}
-#endif
-
 void setup() {
     Serial.begin(9600);
+
     pinMode(SIREN_POWER, OUTPUT);
     digitalWrite(SIREN_POWER, HIGH);
 
@@ -201,98 +90,41 @@ void setup() {
 
     Settings.LoadConfig();
 
+    auto sms = Sms.init();
+
 #ifdef USE_LCD
     lcd.showWelcome(VERSION);
-#endif
-
-    Sms.onReceive(onReceive);
-
-#ifdef USE_7_SEGMENTS
-    display.setSegments(LED_LOAD);
-    delay(1111);
-#endif
-#ifdef USE_LCD
-    lcd.showLoading();
-#endif
-
-    Sms.init();
-#ifdef USE_7_SEGMENTS
-    for (auto i = 0; i < 17; i++) {
-
-        LED_ERROR[3] = display.encodeDigit(Sms.getError() + 1);
-        display.setSegments(LED_ERROR);
-        delay(1111);
-        display.setSegments(LED_BLANK);
-        delay(777);
-        if (Sms.getError() == 1)
-        {
-            display.setSegments(LED_NO);
-            delay(1111);
-            display.setSegments(LED_BLANK);
-            delay(777);
-            display.setSegments(LED_CARD);
-            delay(1111);
-            display.setSegments(LED_BLANK);
-            delay(777);
-        }
-    }
-#endif
-#ifndef USE_LCD || USE_7_SEGMENTS
-    delay(47777);
-#endif
-#ifdef USE_LCD
     lcd.init();
     lcd.setSignal(-1);
-    if (Sms.getError() == 1)
-        lcd.setDescription("INSERT SIM");
-    else
-        lcd.setDescription("MODEM ERROR");
+#endif
+
+    Sms.onSignalChanged(SignalChanged);
+    Sms.onNumberChanged(SimNumberChanged);
 
     delay(1111);
-#endif
-
-
-#ifdef USE_7_SEGMENTS
-    display.setSegments(LED_GOOD);
-#endif
-
-#ifdef USE_LCD
-    lcd.init();
-#endif
-
-    char number[20];
-    Sms.getNumber(number);
+    
+    if(!sms) lcd.setDescription("MODEM ERROR");
 
     river.onLevelChange(OnWaterLevelChanged);
-    river.init(A0, A1, A2, A3, 4);
+    river.init(A0, A1, A2, A3, 11, 10);
 
-    delay(1111);
-        }
+}
 
 bool numberSet = false;
+bool notReadySet = false;
+uint8_t _lastSimStatus = 7;
+
 // the loop function runs over and over again until power down or reset
 void loop() {
     river.update();
     Sms.update();
 
-    // Signal LED
-    //for (auto i = 0; i < SIGNAL_BARS; i++)
-    //    digitalWrite(SignalPIN[i], Sms.getSignal() > i);
-#ifdef USE_7_SEGMENTS
-    updateDisplay();
-#endif
+    auto simStatus = Sms.getSimStatus();
+    if (simStatus == 0)
+        lcd.setDescription("LOADING...");
+    else if(simStatus==-1)
+        lcd.setDescription("INSERT SIM");
 
-#ifdef USE_LCD
-    if (Sms.isReady()) {
-        lcd.setSignal(Sms.getSignal());
 
-        if (!numberSet) {
-            char number[20];
-            Sms.getNumber(number);
-            if (strlen(number) > 0)
-                numberSet = true;
-            lcd.setDescription(number);
-        }
-    }
-#endif
+    lcd.update();
 }

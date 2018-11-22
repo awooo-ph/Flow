@@ -122,6 +122,7 @@ namespace FloodMonitor.ViewModels
                 if (value == _Order) return;
                 _Order = value;
                 OnPropertyChanged(nameof(Order));
+                if(Id>0) SendSensors();
             }
         }
         
@@ -396,10 +397,17 @@ namespace FloodMonitor.ViewModels
         {
             if (!SettingsSaved)
             {
-                Modem.Instance.SendMessage(Number,$"={SensorName},{Siren1},{Siren2},{Siren3}\rhttps://goo.gl/WD3Kka");
+                Modem.Instance.SendMessage(Number,$"={SensorName},{Siren1},{Siren2},{Siren3}\rhttps://goo.gl/RBy5eb");
+                SendSensors();
                 SettingsSent = true;
             }
             base.OnSaved();
+        }
+
+        public void SendSensors()
+        {
+            var sensors = Cache.Where(x => x.Order > Order).ToList();
+            Modem.Instance.SendMessage(Number,$"!{string.Join(";",sensors)}");
         }
 
         private WaterLevel _LatestLevel;

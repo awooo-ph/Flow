@@ -37,12 +37,14 @@ void SettingsClass::LoadConfig()
 	/* Now check the data we just read */
 	if (Current.checksum != sum) {
 		Current = Config();
-        for(auto i=0;i<7;i++)
-            Current.NotifyNumbers[i] = new char[12];
+        for (auto i=0;i<7;i++)
+            Current.NotifyNumbers[i] = new char[15];
 
-        for(auto i=0;i<4;i++)
-            Current.Monitor[i] = new char[12];
+        //for (auto i=0;i<4;i++)
+        //    Current.Monitor[i] = new char[15];
 
+        for (auto i=0;i<7;i++)
+            Current.Sensors[i] = new char[15];
         //for(auto i=0;i<5;i++)
         //{
         //    Current.LevelMessage[i] = new char[MAXIMUM_MESSAGE_LENGTH];
@@ -50,7 +52,7 @@ void SettingsClass::LoadConfig()
         //}
         Current.SensorName = new char[MAXIMUM_SENSOR_NAME_LENGTH];
         Current.Location = new char[MAXIMUM_SENSOR_LOCATION_LENGTH];
-        strcpy_P(Current.SensorName,"SENSOR1");
+        strcpy(Current.SensorName,"SENSOR1");
 	} 
 	
 }

@@ -1,14 +1,17 @@
 #include "Sms.h"
 
 //const char AT[]     PROGMEM = "AT\r";
-//const char CPIN[]   PROGMEM = "AT+CPIN?\r";
-//const char CREG1[]  PROGMEM = "AT+CREG=1\r";            // Network Registration
+//const char CMGD[]   PROGMEM = "AT+CMGD=1,1\r";
+const char CPIN[]   PROGMEM = "AT+CPIN?\r";
+const char CREG1[]  PROGMEM = "AT+CREG=1\r";            // Network Registration
 //const char CSMS[]   PROGMEM = "AT+CSMS=1\r";            // Select Message Service
 //const char CNMI[]   PROGMEM = "AT+CNMI=2,2,0,0,0\r";    // New Message Indication
 //const char CMGF[]   PROGMEM = "AT+CMGF=1\r";            // Select Message Format (0:PDU; 1:TEXT)
 //const char CSCS[]   PROGMEM = "AT+CSCS=\"GSM\"\r";      // Select Character Set
 const char OK[]     PROGMEM = "OK";
 const char ERROR[]  PROGMEM = "ERROR";
+const char CallReady[]  PROGMEM = "Call Ready";
+const char CLIP[]  PROGMEM = "+CLIP:";
 
 //const char* const COMMANDS[] PROGMEM = { AT,CPIN, CREG1,CSMS,CNMI,CMGF,CSCS };
 
@@ -58,7 +61,7 @@ bool SmsClass::init()
     if (_isReady) return true;
     
     sms->begin(9600);
-    sms->println(F("AT"));
+    
     unsigned int start = millis();
     while (!sms)
     {
@@ -68,6 +71,7 @@ bool SmsClass::init()
             return false;
         }
     }
+    sms->println(F("AT"));
     _initStart = millis();
     _modemDetected = true;
     return true;
@@ -89,7 +93,9 @@ bool SmsClass::readLine()
         while(sms->available()>0){
             byte b = sms->read();
             if(b==0) continue;
+
             Serial.write(b);
+
             if (b == '\n' || b == '\r') {
                 BUFFER[BUFFER_INDEX] = '\0';
                 for(auto i=BUFFER_INDEX;i<255;i++)
@@ -125,23 +131,25 @@ void SmsClass::update()
     {
         _initStart = millis();
         if(!(_parsingData || _smsSendStarted))
-            sms->println("AT+CPIN?");
+            sms->println(F("AT+CPIN?"));
     }
 
     if(sms->available())
         if(readLine()) parseData(BUFFER);
-    
+
+
     while (Serial.available())
     {
         sms->write(Serial.read());
     }
+
 
     auto timeout = 44777;
     if(!getSignal()==-1) timeout = 4444;
     if(_isReady && millis()-_lastCSQ>timeout)
     {
         _lastCSQ = millis();
-        sms->println("AT+CSQ");    
+        sms->println(F("AT+CSQ"));
     }
 }
 
@@ -197,10 +205,13 @@ bool SmsClass::commitSend()
     sms->println();
     sms->println(F("https://goo.gl/RBy5eb"));
     sms->write(26);
-    if (waitOk())
+    auto ok = waitOk();
+    #ifdef DEBUG
+    if (ok)
         Serial.println(F("\nMessage Sent!"));
     else
         Serial.println(F("\nMessage sending failed!"));
+#endif
     _smsSendStarted = false;
     return true;
 }
@@ -226,13 +237,13 @@ void SmsClass::getNumber(char *number)
 
 void SmsClass::readUnread()
 {
-    if(_parsingData || _smsSendStarted) return;
-    sms->println(F("AT+CMGL=\"REC UNREAD\""));
+    /*if(_parsingData || _smsSendStarted) return;
+    sms->println(F("AT+CMGL=\"REC UNREAD\""));*/
 }
 
 void SmsClass::sendWarning(uint8_t level)
 {
-    for (auto number : Settings.Current.NotifyNumbers){
+    /*for (auto number : Settings.Current.NotifyNumbers){
         if(!startSend(number)) return;
         sms->print(F("WARNING! Water level at "));
         sms->print(Settings.Current.SensorName);
@@ -241,7 +252,7 @@ void SmsClass::sendWarning(uint8_t level)
         sms->print(F("."));
         commitSend();
         delay(777);
-    }
+    }*/
 }
 
 unsigned long waitStart = 0;
@@ -308,23 +319,23 @@ void SmsClass::parseNumber(const char* str, char * number)
     }
 }
 
-#ifndef UNRESTRICTED
-bool SmsClass::isAdmin(char* number)
-{
-    char * _number = "00000000000";
-
-    if (number[0] == '0') strcpy(_number, number);
-    else if (number[0] == '+')
-        for (auto i = 3; i < strlen(number); i++)
-            _number[i - 2] = number[i];
-    else return false;
-
-    for (auto i = 0; i < 4; i++)
-        if (strcmp(_number, Settings.Current.Monitor[i]) == 0) return true;
-
-    return false;
-}
-#endif
+//#ifndef UNRESTRICTED
+//bool SmsClass::isAdmin(char* number)
+//{
+//    char * _number = "00000000000";
+//
+//    if (number[0] == '0') strcpy(_number, number);
+//    else if (number[0] == '+')
+//        for (auto i = 3; i < strlen(number); i++)
+//            _number[i - 2] = number[i];
+//    else return false;
+//
+//    for (auto i = 0; i < 4; i++)
+//        if (strcmp(_number, Settings.Current.Monitor[i]) == 0) return true;
+//
+//    return false;
+//}
+//#endif
 
 
 void SmsClass::ProcessSensors(char * message)
@@ -370,20 +381,14 @@ void SmsClass::ProcessSettings(char * message)
             else if (ci == 1)
             {
                 Settings.Current.SirenLevel[0] = atoi(value);
-                Serial.print("SIREN1: ");
-                Serial.println(Settings.Current.SirenLevel[0]);
             }
             else if (ci == 2)
             {
                 Settings.Current.SirenLevel[1] = atoi(value);
-                Serial.print("SIREN2: ");
-                Serial.println(Settings.Current.SirenLevel[1]);
             }
             else if (ci == 3)
             {
                 Settings.Current.SirenLevel[2] = atoi(value);
-                Serial.print("SIREN3: ");
-                Serial.println(Settings.Current.SirenLevel[2]);
             }
            
             ci++;
@@ -403,18 +408,13 @@ void SmsClass::parseSMS(char* command)
     _parsingData = true;
     char number[15];
     parseNumber(command,number);
-    Serial.print("PARSE SMS: ");
-    Serial.println(number);
 
     BUFFER[0] = 0;
     while(strlen(BUFFER)==0){
         while(!readLine()){}
     }
-
-    Serial.print("MESSAGE: ");
-    Serial.println(BUFFER);
-    
-    char * code = "https://goo.gl/RBy5eb";
+        
+    char * code = "777";//"https://goo.gl/RBy5eb";
     if(strcmp(code,BUFFER)==0)
     {
         strcpy(Settings.Current.Monitor,number);
@@ -468,14 +468,13 @@ void SmsClass::parseData(char* command)
 {
     if (strlen(command) == 0) return;
 
-    if(strcmp(command,"Call Ready")==0)
+    if(strcmp_P(command,CallReady)==0)
     {
         _isReady = true;
     }
 
     if(startsWith("+CPIN:",command))
     {
-        Serial.println("SIM READY");
         _isReady = true;
         _simStatus = 1;
         sms->println(F("AT+CNUM"));
@@ -497,20 +496,19 @@ void SmsClass::parseData(char* command)
 
     if (startsWith("+CREG:", command))
     {
-        _isRegistered = strcmp(command, "+CREG: 0,1") == 0 || strcmp(command, "+CREG: 1,1") == 0
-            || strcmp(command, "+CREG: 1,5") == 0 || strcmp(command, "+CREG: 0,5") == 0
-            || strstr("+CREG: 5",command) || strstr("+CREG: 1",command);
-        if(_isRegistered)
-        {
-            _isReady = 1;
-            _simStatus = 1;
-        }
+        _isRegistered = true;// strcmp(command, "+CREG: 0,1") == 0 || strcmp(command, "+CREG: 1,1") == 0
+            //|| strcmp(command, "+CREG: 1,5") == 0 || strcmp(command, "+CREG: 0,5") == 0
+            //|| strstr("+CREG: 5",command) || strstr("+CREG: 1",command);
+        
+        _isReady = true;
+        //_simStatus = 1;
+        
         if(!(_parsingData || _smsSendStarted))
             sms->println(F("AT+CSQ"));
     }
 
-    if (startsWith("+CLIP:", command)) //Hangup call
+    if (strstr_P(command,CLIP)) //Hangup call
         sms->println(F("ATH"));
-    else if (startsWith("+CMT: ", command)) //New message
+    else if (startsWith("+CMT:", command)) //New message
         parseSMS(command);
 }

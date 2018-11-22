@@ -20,8 +20,8 @@ struct Config
     char * SensorName;
     char * Location;
     char Monitor[15];
-    char * Sensors[7];
-    char * NotifyNumbers[7];
+    char Sensors[7][15];
+    //char NotifyNumbers[4][15];
     
     unsigned int checksum;
 };

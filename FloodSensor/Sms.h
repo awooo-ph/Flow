@@ -14,13 +14,16 @@ class SmsClass
 {
 private:
     SoftwareSerial * sms;
+    char BUFFER[255];
+    int BUFFER_INDEX = 0;
+    bool _parsingData = false;
     unsigned int _initStart = 0;
     bool _isReady = false;
     bool _isRegistered = false;
     long _lastCREG = 0;
     uint8_t _simStatus = 0;
     bool waitOk();
-    void readLine(char data[]);
+    bool readLine();
     int csq = 0;
     void processCSQ(char command[]);
     void parseData(char * data);

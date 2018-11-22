@@ -6,7 +6,7 @@
 #define GSM_RX 8
 #define GSM_TX 9
 
-#include <Arduino.h>
+//#include <Arduino.h>
 #include "Settings.h"
 #include "Sms.h"
 #include  "WaterLevel.h"
@@ -77,7 +77,9 @@ unsigned long lastDisplayUpdate = 0;
 uint8_t displayCount = 0;
 
 void setup() {
+   // #ifdef DEBUG
     Serial.begin(9600);
+//#endif
 
     pinMode(SIREN_POWER, OUTPUT);
     digitalWrite(SIREN_POWER, HIGH);
@@ -89,13 +91,7 @@ void setup() {
     }
 
     Settings.LoadConfig();
-
-    Serial.println(Settings.Current.SensorName);
-    Serial.print("SIREN: ");
-    Serial.print(Settings.Current.SirenLevel[0]);
-    Serial.print(Settings.Current.SirenLevel[1]);
-    Serial.println(Settings.Current.SirenLevel[2]);
-
+    
     auto sms = Sms.init();
 
 #ifdef USE_LCD

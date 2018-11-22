@@ -26,15 +26,6 @@ void DisplayClass::showWelcome(char * version)
     delay(4444);
 }
 
-void DisplayClass::showLoading()
-{
-    lcd->setCursor(0,0);
-    lcd->print(F("STARTING MODEM  "));
-    lcd->setCursor(0,1);
-    lcd->print(F("PLEASE WAIT...  "));
-    delay(1111);
-}
-
 void DisplayClass::init()
 {
     if(_initialized) return;
@@ -75,37 +66,13 @@ void DisplayClass::init()
 
 void DisplayClass::setSignal(int signal)
 {
-    switch (signal)
-    {
-    case -1:
-        lcd->createChar(1, no_signal);
-        lcd->createChar(2, no_signal);
-        break;
-    case 0:
-        lcd->createChar(1, blank);
-        lcd->createChar(2, blank);
-        break;
-    case 1:
-        lcd->createChar(1, bars_1);
-        lcd->createChar(2, blank);
-        break;
-    case 2:
-        lcd->createChar(1, bars_2);
-        lcd->createChar(2, blank);
-        break;
-    case 3:
-        lcd->createChar(1, bars_2);
-        lcd->createChar(2, bars_3);
-        break;
-    case 4:
-        lcd->createChar(1, bars_2);
-        lcd->createChar(2, bars_4);
-        break;
-    }
+    _signal = signal;
 }
 
 void DisplayClass::setLevel(uint8_t level)
 {
+    if(level==_waterLevel) return;
+    _waterLevel = level;
     lcd->setCursor(5, 0);
     lcd->print(F(" LEVEL "));
     lcd->print(level);
@@ -141,13 +108,50 @@ void DisplayClass::setLevel(uint8_t level)
 
 void DisplayClass::setDescription(char* desc)
 {
+    strcpy(description,desc);
+}
+
+void DisplayClass::update()
+{
+    if(millis()-_lastUpdate<1111) return;
+    _lastUpdate = millis();
+    switch (_signal)
+    {
+    case -1:
+        lcd->createChar(1, no_signal);
+        lcd->createChar(2, no_signal);
+        break;
+    case 0:
+        lcd->createChar(1, blank);
+        lcd->createChar(2, blank);
+        break;
+    case 1:
+        lcd->createChar(1, bars_1);
+        lcd->createChar(2, blank);
+        break;
+    case 2:
+        lcd->createChar(1, bars_2);
+        lcd->createChar(2, blank);
+        break;
+    case 3:
+        lcd->createChar(1, bars_2);
+        lcd->createChar(2, bars_3);
+        break;
+    case 4:
+        lcd->createChar(1, bars_2);
+        lcd->createChar(2, bars_4);
+        break;
+    }
+
     lcd->setCursor(0, 1);
-    lcd->print(F("              "));
-    for(auto i=0;i<strlen(desc);i++)
+    auto len = strlen(description);
+    for(auto i=0;i<14;i++)
     {
         if(i==14) return;
         lcd->setCursor(i, 1);
-        lcd->print(desc[i]);
+        if(i<len)
+            lcd->print(description[i]);
+        else
+            lcd->print(F(" "));
     }
-    
 }

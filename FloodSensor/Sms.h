@@ -14,7 +14,7 @@ class SmsClass
 {
 private:
     SoftwareSerial * sms;
-    char BUFFER[255];
+    char BUFFER[147];
     int BUFFER_INDEX = 0;
     bool _parsingData = false;
     unsigned int _initStart = 0;
@@ -30,7 +30,7 @@ private:
     void parseNumber(const char * data, char* number);
     bool startsWith(const char *pre, const char *str);
     void parseSMS(char* command);
-    bool isAdmin(char * number);
+    //bool isAdmin(char * number);
     bool _modemDetected = false;
     uint8_t errorCode = 0;
     bool _smsSendStarted = false;

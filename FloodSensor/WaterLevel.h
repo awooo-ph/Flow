@@ -18,11 +18,12 @@ private:
     uint8_t _currentLevel = 0;
     uint8_t _newWaterLevel = 0;
     uint8_t _levelPIN[5] = { A0,A1,A2,A3,A6 };
+    uint8_t _levelEnablePin = 10;
     unsigned long _lastLevelCheck = 0;
     unsigned long _waterLevelChanged = 0;
 
  public:
-    void init(uint8_t level1, uint8_t level2, uint8_t level3, uint8_t level4, uint8_t level5);
+    void init(uint8_t level1, uint8_t level2, uint8_t level3, uint8_t level4, uint8_t level5,uint8_t levelEnable);
     void onLevelChange(void (*onLevelChangeCallback)(uint8_t level));
     void update();
     uint8_t getLevel() {return _currentLevel;}

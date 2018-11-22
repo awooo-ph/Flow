@@ -18,12 +18,12 @@ void DisplayClass::showWelcome(char * version)
     lcd->print(F("SFC - GUIHULNGAN"));
     lcd->setCursor(0,1);
     lcd->print(F("BSIM  BATCH 2019"));
-    delay(4444);
+    delay(1111);
     lcd->setCursor(0,0);
     lcd->print(F("FLOOD MONITORING"));
     lcd->setCursor(0,1);
     lcd->print(F("& WARNING SYSTEM"));
-    delay(4444);
+    delay(1111);
 }
 
 void DisplayClass::init()

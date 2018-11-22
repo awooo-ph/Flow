@@ -52,8 +52,8 @@ void OnWaterLevelChanged(uint8_t level)
     {
         char * msg = ".0";
         sprintf(msg, ".%d", level);
-        for (auto number : Settings.Current.Monitor)
-            Sms.send(number, msg);
+        
+        Sms.send(Settings.Current.Monitor, msg);
 
         Sms.sendWarning(level);
     }
@@ -89,6 +89,12 @@ void setup() {
     }
 
     Settings.LoadConfig();
+
+    Serial.println(Settings.Current.SensorName);
+    Serial.print("SIREN: ");
+    Serial.print(Settings.Current.SirenLevel[0]);
+    Serial.print(Settings.Current.SirenLevel[1]);
+    Serial.println(Settings.Current.SirenLevel[2]);
 
     auto sms = Sms.init();
 

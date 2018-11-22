@@ -15,6 +15,10 @@
 class DisplayClass
 {
 private:
+    unsigned int _lastUpdate=0;
+    char description[14];
+    int _signal=7;
+    uint8_t _waterLevel=7;
     bool _initialized = false;
     LiquidCrystal_I2C * lcd;
     byte water_level[8] = { B11111,  B10001,  B10001,  B11101,  B10001,  B10001,  B11101,  B10001 };
@@ -46,13 +50,13 @@ private:
  public:
     DisplayClass(uint8_t address);
 	void showWelcome(char *);
-    void showLoading();
     void clear();
     void init();
     void showError(char * error);
     void setSignal(int signal);
     void setLevel(uint8_t level);
     void setDescription(char * desc);
+    void update();
 };
 
 extern DisplayClass Display;

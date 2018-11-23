@@ -105,10 +105,16 @@ namespace FloodMonitor.ViewModels
             {
                 if (value == _WarningLevel) return;
                 _WarningLevel = value;
+                
                 OnPropertyChanged(nameof(WarningLevel));
-                if(Id>0)
-                    Save();
                 OnPropertyChanged(nameof(IsWarning));
+
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                    Save();
+                }
             }
         }
 
@@ -122,7 +128,11 @@ namespace FloodMonitor.ViewModels
                 if (value == _Order) return;
                 _Order = value;
                 OnPropertyChanged(nameof(Order));
-                if(Id>0) SendSensors();
+                if (Id > 0)
+                {
+                    SettingsSaved = false;
+                    SettingsSent = false;
+                }
             }
         }
         
@@ -198,7 +208,7 @@ namespace FloodMonitor.ViewModels
         }
 
         private ChartValues<WaterLevel> _waterLevels;
-        //private List<WaterLevel> _levels;// = new List<WaterLevel>();
+        
         public ChartValues<WaterLevel> WaterLevels
         {
             get
@@ -208,7 +218,7 @@ namespace FloodMonitor.ViewModels
                 _waterLevels.AddRange(ViewModels.WaterLevel.Cache
                     .Where(x => x.SensorId == Id)
                     .OrderByDescending(x=>x.Id)
-                    .Take(10).ToList());//.Select(x=>x.Level * 1.0));
+                    .Take(47).ToList());
                 LatestLevel = _waterLevels.Last();
                 if (_waterLevels.Count == 0)
                 {

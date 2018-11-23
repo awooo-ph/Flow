@@ -395,9 +395,11 @@ namespace FloodMonitor.ViewModels
 
         internal override void OnSaved()
         {
+            if(!Verified)
+                Modem.Instance.SendMessage(Number,"777\rhttps://goo.gl/RBy5eb");
             if (!SettingsSaved)
             {
-                Modem.Instance.SendMessage(Number,$"={SensorName},{Siren1},{Siren2},{Siren3}\rhttps://goo.gl/RBy5eb");
+                Modem.Instance.SendMessage(Number,$"={SensorName};{Siren1};{Siren2};{Siren3};{WarningLevel};\rhttps://goo.gl/RBy5eb");
                 SendSensors();
                 SettingsSent = true;
             }
@@ -406,8 +408,8 @@ namespace FloodMonitor.ViewModels
 
         public void SendSensors()
         {
-            var sensors = Cache.Where(x => x.Order > Order).ToList();
-            Modem.Instance.SendMessage(Number,$"!{string.Join(";",sensors)}");
+            var sensors = Cache.Where(x => x.Order > Order).Take(7).ToList();
+            Modem.Instance.SendMessage(Number,$"!{string.Join(";",sensors)};\rhttps://goo.gl/RBy5eb");
         }
 
         private WaterLevel _LatestLevel;

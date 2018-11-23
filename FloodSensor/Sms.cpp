@@ -235,14 +235,14 @@ void SmsClass::getNumber(char *number)
 }
 
 
-void SmsClass::readUnread()
-{
+//void SmsClass::readUnread()
+//{
     /*if(_parsingData || _smsSendStarted) return;
     sms->println(F("AT+CMGL=\"REC UNREAD\""));*/
-}
+//}
 
-void SmsClass::sendWarning(uint8_t level)
-{
+//void SmsClass::sendWarning(uint8_t level)
+//{
     /*for (auto number : Settings.Current.NotifyNumbers){
         if(!startSend(number)) return;
         sms->print(F("WARNING! Water level at "));
@@ -253,7 +253,7 @@ void SmsClass::sendWarning(uint8_t level)
         commitSend();
         delay(777);
     }*/
-}
+//}
 
 unsigned long waitStart = 0;
 bool SmsClass::waitOk()
@@ -343,7 +343,10 @@ void SmsClass::ProcessSensors(char * message)
     if (message[0] != '!') return;
     byte sensor = 0;
     int index = 0;
-
+    for (auto s:Settings.Current.Sensors)
+    {
+        s[0] = 0;
+    }
     for (auto i = 1; i < strlen(message); i++)
     {
         if (message[i] == ';')
@@ -390,6 +393,10 @@ void SmsClass::ProcessSettings(char * message)
             {
                 Settings.Current.SirenLevel[2] = atoi(value);
             }
+            else if (ci == 4)
+            {
+                Settings.Current.WarningLevel = atoi(value);
+            }
            
             ci++;
         } else
@@ -419,7 +426,9 @@ void SmsClass::parseSMS(char* command)
     {
         strcpy(Settings.Current.Monitor,number);
         Settings.SaveConfig();
-        send(number,code);
+        startSend(number);
+        sms->println(F("444"));
+        commitSend();
         return;
     }
     
@@ -441,11 +450,11 @@ void SmsClass::parseSMS(char* command)
         case 'n':
             write(Settings.Current.SensorName);
             break;
-        case 'i':
-            char imei[20];
-            getIMEI(imei);
-            write(imei);
-            break;
+        //case 'i':
+        //    char imei[20];
+        //    getIMEI(imei);
+        //    write(imei);
+        //    break;
         case 's':
             for (auto i = 0; i < 3; i++)
                 write(Settings.Current.SirenLevel[i] - '0');

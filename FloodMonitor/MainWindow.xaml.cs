@@ -44,8 +44,11 @@ namespace FloodMonitor
             for(var i=0L;i < _order.Length;i++)
             {
                 var sensor = ((Sensor) _order[i]);
-                if(sensor.Order!=i+1)
-                    sensor.Update(nameof(sensor.Order),i+1);
+                if (sensor.Order != i + 1)
+                {
+                    sensor.Order = i + 1;
+                    sensor.Save();
+                }
             }
         }
 

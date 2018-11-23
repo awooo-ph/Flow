@@ -302,7 +302,7 @@ namespace FloodMonitor.ViewModels
         private async Task<bool> WaitOk()
         {
             _okReceived = false;
-            for (var i = 0; i < 7; i++)
+            for (var i = 0; i < 77; i++)
             {
                 if(_okReceived) return true;
                 await Task.Delay(777);

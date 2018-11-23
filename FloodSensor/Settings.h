@@ -10,13 +10,12 @@
 #endif
 
 #include <EEPROM.h>
-#include <avr/pgmspace.h>
 
 struct Config
 {
     unsigned int LevelTimeout = 7777;
     int SirenLevel[3] = { 1,2,3 };
-    bool NotifyLevel[5] = { true,true,true,true,true };
+    int WarningLevel = 0;
     char * SensorName;
     char * Location;
     char Monitor[15];

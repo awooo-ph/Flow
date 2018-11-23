@@ -65,8 +65,8 @@ public:
     void cancelSend();
     void restart();
     void getNumber(char *);
-    void readUnread();
-    void sendWarning(uint8_t);
+    //void readUnread();
+    //void sendWarning(uint8_t);
 };
 
 #endif

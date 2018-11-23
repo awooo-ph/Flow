@@ -6,10 +6,9 @@
 #define GSM_RX 8
 #define GSM_TX 9
 
-//#include <Arduino.h>
 #include "Settings.h"
 #include "Sms.h"
-#include  "WaterLevel.h"
+#include "WaterLevel.h"
 
 #ifdef USE_LCD
 #include "Display.h"
@@ -48,15 +47,15 @@ void OnWaterLevelChanged(uint8_t level)
         }
     }
 
-    if (Settings.Current.NotifyLevel[level - 1])
-    {
-        char * msg = ".0";
-        sprintf(msg, ".%d", level);
-        
-        Sms.send(Settings.Current.Monitor, msg);
+    char * msg = ".0";
+    sprintf(msg, ".%d", level);
+    
+    Sms.send(Settings.Current.Monitor, msg);
 
-        Sms.sendWarning(level);
-    }
+    if (Settings.Current.WarningLevel>0 && Settings.Current.WarningLevel<=level)
+        for(auto sensor:Settings.Current.Sensors)
+            Sms.send(sensor,msg);
+
 }
 
 void SignalChanged(int signal)

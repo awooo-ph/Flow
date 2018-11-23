@@ -77,9 +77,11 @@
                          Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=HasSIM,Converter={converters:BooleanToVisibility Collapsed,Visible}}"/>
           </Grid>
 
-          <ProgressBar Style="{DynamicResource MaterialDesignCircularProgressBar}"
-                         Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=IsBooting,Converter={converters:BooleanToVisibility}}"
-                         IsIndeterminate="True"/>
+          <StackPanel Orientation="Horizontal" Visibility="{Binding Source={x:Static viewModels:Modem.Instance},Path=IsBooting,Converter={converters:BooleanToVisibility}}">
+            <ProgressBar Style="{DynamicResource MaterialDesignCircularProgressBar}"
+                           IsIndeterminate="True"/>
+            <TextBlock Text="    LOADING" VerticalAlignment="Center"/>
+          </StackPanel>
         </Grid>
       </Expander.Header>
     </Expander>

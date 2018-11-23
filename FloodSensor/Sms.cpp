@@ -351,7 +351,7 @@ void SmsClass::ProcessSensors(char * message)
     {
         if (message[i] == ';')
         {
-            Settings.Current.Sensors[sensor][index] = '\0';
+            Settings.Current.Sensors[sensor][index] = 0;
             sensor++;
             if (sensor == 17) return;
             index = 0;

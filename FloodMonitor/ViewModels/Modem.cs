@@ -285,7 +285,7 @@ namespace FloodMonitor.ViewModels
             if (sensor==null || string.IsNullOrEmpty(command)) return;
             if(command == "==")
                 sensor.Update(nameof(sensor.SettingsSaved),true);
-            else if (command == "https://goo.gl/RBy5eb")
+            else if (command == "444")
             {
                 sensor.Update(nameof(sensor.Verified),true);
             } else if (command.StartsWith(".") && command.Length>=2)

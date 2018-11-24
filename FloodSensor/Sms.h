@@ -10,17 +10,20 @@
 #include <SoftwareSerial.h>
 #include "Settings.h"
 
+#define BUFFER_LENGTH 147
+
 class SmsClass
 {
 private:
     SoftwareSerial * sms;
-    char BUFFER[147];
+    char BUFFER[BUFFER_LENGTH];
     int BUFFER_INDEX = 0;
     bool _parsingData = false;
     unsigned int _initStart = 0;
     bool _isReady = false;
     bool _isRegistered = false;
     long _lastCREG = 0;
+    unsigned int _lastCPIN=0;
     uint8_t _simStatus = 0;
     bool waitOk();
     bool readLine();
@@ -41,7 +44,7 @@ private:
     void parseCNUM(char * data);
     void ProcessSettings(char *);
     void ProcessSensors(char * message);
-
+    void checkSIM();
 public:
     SmsClass(uint8_t rx, uint8_t tx);
     uint8_t getError() { return errorCode; }

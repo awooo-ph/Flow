@@ -76,9 +76,8 @@ unsigned long lastDisplayUpdate = 0;
 uint8_t displayCount = 0;
 
 void setup() {
-   // #ifdef DEBUG
+
     Serial.begin(9600);
-//#endif
 
     pinMode(SIREN_POWER, OUTPUT);
     digitalWrite(SIREN_POWER, HIGH);

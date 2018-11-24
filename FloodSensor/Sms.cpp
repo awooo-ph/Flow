@@ -71,7 +71,10 @@ bool SmsClass::init()
             return false;
         }
     }
+    
     sms->println(F("AT"));
+    waitOk();
+
     _initStart = millis();
     _modemDetected = true;
     return true;
@@ -93,12 +96,12 @@ bool SmsClass::readLine()
         while(sms->available()>0){
             byte b = sms->read();
             if(b==0) continue;
-
+            
             Serial.write(b);
 
             if (b == '\n' || b == '\r') {
                 BUFFER[BUFFER_INDEX] = '\0';
-                for(auto i=BUFFER_INDEX;i<255;i++)
+                for(auto i=BUFFER_INDEX;i<BUFFER_LENGTH;i++)
                     BUFFER[i]=0;
                 if(BUFFER_INDEX==0) return false;
                 BUFFER_INDEX = 0;
@@ -108,8 +111,7 @@ bool SmsClass::readLine()
             BUFFER_INDEX++;
         }
     //}
-    //return false;
-    return true;
+    return false;
 }
 
 /// Returns the signal strength (0-4)
@@ -127,12 +129,8 @@ int SmsClass::getSignal()
 void SmsClass::update()
 {
     if(_parsingData) return;
-    if(_simStatus == 0 && millis()-_initStart>7777)
-    {
-        _initStart = millis();
-        if(!(_parsingData || _smsSendStarted))
-            sms->println(F("AT+CPIN?"));
-    }
+    
+    checkSIM();
 
     if(sms->available())
         if(readLine()) parseData(BUFFER);
@@ -145,7 +143,6 @@ void SmsClass::update()
 
 
     auto timeout = 44777;
-    if(!getSignal()==-1) timeout = 4444;
     if(_isReady && millis()-_lastCSQ>timeout)
     {
         _lastCSQ = millis();
@@ -365,6 +362,26 @@ void SmsClass::ProcessSensors(char * message)
     Settings.SaveConfig();
 }
 
+void SmsClass::checkSIM()
+{
+    
+    if(millis()-_initStart<7777) return;
+
+    if(millis()-_lastCPIN<7777) return;
+    if(_parsingData && _smsSendStarted) return;
+    _lastCPIN = millis();
+    if(_simStatus==0)
+    {
+        sms->println(F("AT+CPIN?"));
+    } else if(strlen(simNumber)==0)
+    {
+        sms->println(F("AT+CNUM"));
+    } else if(getSignal()==-1)
+    {
+        sms->println(F("AT+CSQ"));
+    }
+}
+
 void SmsClass::ProcessSettings(char * message)
 {
     auto ci = 0;
@@ -486,7 +503,8 @@ void SmsClass::parseData(char* command)
     {
         _isReady = true;
         _simStatus = 1;
-        sms->println(F("AT+CNUM"));
+        if(strlen(simNumber)==0)
+            sms->println(F("AT+CNUM"));
         return;
     }
 
@@ -499,7 +517,6 @@ void SmsClass::parseData(char* command)
     if(startsWith("+CNUM:",command))
     {
         parseCNUM(command);
-        sms->println(F("AT+CSQ"));
         return;
     }
 

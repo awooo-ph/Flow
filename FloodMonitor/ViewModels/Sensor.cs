@@ -405,14 +405,19 @@ namespace FloodMonitor.ViewModels
 
         internal override void OnSaved()
         {
-            if(!Verified)
-                Modem.Instance.SendMessage(Number,"777\rhttps://goo.gl/RBy5eb");
-            if (!SettingsSaved)
+            if (Modem.Instance.IsOnline)
             {
-                Modem.Instance.SendMessage(Number,$"={SensorName};{Siren1};{Siren2};{Siren3};{WarningLevel};\rhttps://goo.gl/RBy5eb");
-                SendSensors();
-                SettingsSent = true;
+                if (!Verified)
+                    Modem.Instance.SendMessage(Number, "777\rhttps://goo.gl/RBy5eb");
+                if (!SettingsSaved)
+                {
+                    Modem.Instance.SendMessage(Number,
+                        $"={SensorName};{Siren1};{Siren2};{Siren3};{WarningLevel};\rhttps://goo.gl/RBy5eb");
+                    SendSensors();
+                    SettingsSent = true;
+                }
             }
+
             base.OnSaved();
         }
 

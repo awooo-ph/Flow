@@ -4,16 +4,16 @@
 
 #include "Display.h"
 
-
-
 DisplayClass::DisplayClass(uint8_t address)
 {
     lcd = new LiquidCrystal_I2C(address,16,2);
+    _address = address;
+    //_lcdFound = lcd;
 }
 
-void DisplayClass::showWelcome(char * version)
-{
-    lcd->begin();
+void DisplayClass::showWelcome()
+{    
+    if(!_lcdFound) return;
     lcd->setCursor(0,0);
     lcd->print(F("SFC - GUIHULNGAN"));
     lcd->setCursor(0,1);
@@ -26,10 +26,10 @@ void DisplayClass::showWelcome(char * version)
     delay(1111);
 }
 
-void DisplayClass::init()
+void DisplayClass::draw()
 {
-    if(_initialized) return;
-    _initialized = true;
+    if(!_lcdFound) return;
+
     lcd->clear();
 
     lcd->createChar(0,antenna);  
@@ -64,6 +64,12 @@ void DisplayClass::init()
     setSignal(0);
 }
 
+void DisplayClass::begin()
+{
+    lcd->begin();
+    _lcdFound = true;
+}
+
 void DisplayClass::setSignal(int signal)
 {
     _signal = signal;
@@ -71,6 +77,8 @@ void DisplayClass::setSignal(int signal)
 
 void DisplayClass::setLevel(uint8_t level)
 {
+    if(!_lcdFound) return;
+
     if(level==_waterLevel) return;
     _waterLevel = level;
     lcd->setCursor(5, 0);
@@ -113,6 +121,8 @@ void DisplayClass::setDescription(char* desc)
 
 void DisplayClass::update()
 {
+    if(!_lcdFound) return;
+
     if(millis()-_lastUpdate<1111) return;
     _lastUpdate = millis();
     switch (_signal)

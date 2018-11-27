@@ -12,6 +12,7 @@ const char OK[]     PROGMEM = "OK";
 const char ERROR[]  PROGMEM = "ERROR";
 const char CallReady[]  PROGMEM = "Call Ready";
 const char CLIP[]  PROGMEM = "+CLIP:";
+const char NO_SIM[] PROGMEM = "+CME ERROR: SIM not inserted";
 
 //const char* const COMMANDS[] PROGMEM = { AT,CPIN, CREG1,CSMS,CNMI,CMGF,CSCS };
 
@@ -71,13 +72,12 @@ bool SmsClass::init()
             return false;
         }
     }
-    
-    sms->println(F("AT"));
-    waitOk();
 
+    sms->println(F("AT"));
+    
     _initStart = millis();
-    _modemDetected = true;
-    return true;
+    //_modemDetected = waitOk();
+    //return _modemDetected;
 }
 
 void SmsClass::onSignalChanged(void(* callback)(int))
@@ -96,7 +96,7 @@ bool SmsClass::readLine()
         while(sms->available()>0){
             byte b = sms->read();
             if(b==0) continue;
-            
+            _modemDetected = true;
             Serial.write(b);
 
             if (b == '\n' || b == '\r') {
@@ -259,7 +259,7 @@ bool SmsClass::waitOk()
     while (millis() - waitStart < 4444)
     {
         
-        while(!readLine()){}
+        if(!readLine())continue;
 
         if (BUFFER && strlen(BUFFER) > 0) {
             if (strcasecmp_P(BUFFER, OK) == 0)
@@ -364,7 +364,12 @@ void SmsClass::ProcessSensors(char * message)
 
 void SmsClass::checkSIM()
 {
-    
+    if(_simStatus == -1)
+    {
+        csq = 0;
+        return;
+    }
+
     if(millis()-_initStart<7777) return;
 
     if(millis()-_lastCPIN<7777) return;
@@ -497,6 +502,13 @@ void SmsClass::parseData(char* command)
     if(strcmp_P(command,CallReady)==0)
     {
         _isReady = true;
+        return;
+    }
+
+    if(strcmp_P(command,NO_SIM)==0)
+    {
+        _simStatus = -1;
+        return;
     }
 
     if(startsWith("+CPIN:",command))

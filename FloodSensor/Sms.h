@@ -24,7 +24,7 @@ private:
     bool _isRegistered = false;
     long _lastCREG = 0;
     unsigned int _lastCPIN=0;
-    uint8_t _simStatus = 0;
+    int _simStatus = 0;
     bool waitOk();
     bool readLine();
     int csq = 0;
@@ -53,7 +53,7 @@ public:
     void onNumberChanged(void(*)(void));
     bool modemDetected(){return _modemDetected;}
     bool isReady() { return _isReady; }
-    uint8_t getSimStatus() {return _simStatus;};
+    int getSimStatus() {return _simStatus;};
     bool isRegistered() { return _isRegistered; }
     int getRSSI() { return csq; }
     int getSignal();

@@ -13,7 +13,7 @@
 
 struct Config
 {
-    unsigned int LevelTimeout = 7777;
+    unsigned int LevelTimeout = 4444;
     int SirenLevel[3] = { 1,2,3 };
     int WarningLevel = 0;
     char * SensorName;

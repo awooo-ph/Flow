@@ -121,6 +121,7 @@
     <Compile Include="Config.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Sms.cs" />
+    <Compile Include="ViewModels\Monitor.cs" />
     <Compile Include="ViewModels\Sensor.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\WaterLevel.cs" />
@@ -189,6 +190,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="shadow-divider_2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="SplashScreen1.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.109.2\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.109.2\build\net46\System.Data.SQLite.Core.targets')" />

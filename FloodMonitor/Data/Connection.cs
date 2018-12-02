@@ -47,7 +47,7 @@ internal static class Db
         var table = GetTable<T>();
         var c = Connection.CreateCommand();
 
-        c.CommandText = $"SELECT * FROM {table.Name} WHERE NOT IsDeleted LIMIT 0,74";
+        c.CommandText = $"SELECT * FROM {table.Name} WHERE NOT IsDeleted LIMIT 0,777";
 
         var r = c.ExecuteReader();
         while (r.Read())

@@ -18,12 +18,12 @@ void DisplayClass::showWelcome()
     lcd->print(F("SFC - GUIHULNGAN"));
     lcd->setCursor(0,1);
     lcd->print(F("BSIM  BATCH 2019"));
-    delay(1111);
+    delay(2222);
     lcd->setCursor(0,0);
     lcd->print(F("FLOOD MONITORING"));
     lcd->setCursor(0,1);
     lcd->print(F("& WARNING SYSTEM"));
-    delay(1111);
+    delay(2222);
 }
 
 void DisplayClass::draw()
@@ -119,6 +119,12 @@ void DisplayClass::setDescription(char* desc)
     strcpy(description,desc);
 }
 
+void DisplayClass::showSettingsChanged()
+{
+    _displayIndex = 7;
+    _messageStarted = millis();
+}
+
 void DisplayClass::update()
 {
     if(!_lcdFound) return;
@@ -154,14 +160,30 @@ void DisplayClass::update()
     }
 
     lcd->setCursor(0, 1);
-    auto len = strlen(description);
-    for(auto i=0;i<14;i++)
+
+    if(_displayIndex==0){
+        auto len = strlen(description);
+        for(auto i=0;i<14;i++)
+        {
+            if(i==14) return;
+            lcd->setCursor(i, 1);
+            if(i<len)
+                lcd->print(description[i]);
+            else
+                lcd->print(F(" "));
+        }
+    } else if(_displayIndex==7)
     {
-        if(i==14) return;
-        lcd->setCursor(i, 1);
-        if(i<len)
-            lcd->print(description[i]);
-        else
-            lcd->print(F(" "));
+        if(millis()-_messageStarted<4444)
+        {
+            if(!_messageSet)
+            {
+                _messageSet = true;
+                lcd->print(F("CONFIG CHANGED"));    
+            }
+        } else
+        {
+            _displayIndex = 0;
+        }
     }
 }

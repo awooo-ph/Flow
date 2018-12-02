@@ -39,6 +39,7 @@ private:
     bool _smsSendStarted = false;
     void(*_onSignalChanged)(int) = nullptr;
     void(*_onSimNumberChanged)(void) = nullptr;
+    void(*_onSettingsReceived)(void) = nullptr;
     unsigned long _lastCSQ=0;
     unsigned long _lastCNUM=0;
     void parseCNUM(char * data);
@@ -49,6 +50,7 @@ public:
     SmsClass(uint8_t rx, uint8_t tx);
     uint8_t getError() { return errorCode; }
     bool init();
+    void onSettingsReceived(void(*)(void));
     void onSignalChanged(void(*)(int));
     void onNumberChanged(void(*)(void));
     bool modemDetected(){return _modemDetected;}

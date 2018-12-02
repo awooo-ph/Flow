@@ -215,11 +215,12 @@ namespace FloodMonitor.ViewModels
             {
                 if (_waterLevels != null) return _waterLevels;
                 _waterLevels = new ChartValues<WaterLevel>();
-                _waterLevels.AddRange(ViewModels.WaterLevel.Cache
-                    .Where(x => x.SensorId == Id)
-                    .OrderByDescending(x=>x.Id)
-                    .Take(47).ToList());
-                LatestLevel = _waterLevels.Last();
+                var levels = ViewModels.WaterLevel.Cache
+                    .Where(x => x.SensorId == Id).ToList();
+                var latest = levels.OrderByDescending(x=>x.Id).Take(47).ToList();
+                    
+                _waterLevels.AddRange(latest);
+                LatestLevel = _waterLevels?.LastOrDefault();
                 if (_waterLevels.Count == 0)
                 {
                     SetLevel(0);
@@ -424,7 +425,10 @@ namespace FloodMonitor.ViewModels
         public void SendSensors()
         {
             var sensors = Cache.Where(x => x.Order > Order).Take(7).ToList();
-            Modem.Instance.SendMessage(Number,$"!{string.Join(";",sensors)};\rhttps://goo.gl/RBy5eb");
+            if(sensors.Count==0)
+                Modem.Instance.SendMessage(Number,$"!!\rhttps://goo.gl/RBy5eb");
+            else
+                Modem.Instance.SendMessage(Number,$"!{string.Join(";",sensors)};\rhttps://goo.gl/RBy5eb");
         }
 
         private WaterLevel _LatestLevel;

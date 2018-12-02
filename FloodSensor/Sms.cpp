@@ -80,6 +80,11 @@ bool SmsClass::init()
     //return _modemDetected;
 }
 
+void SmsClass::onSettingsReceived(void(* callback)())
+{
+    _onSettingsReceived = callback;
+}
+
 void SmsClass::onSignalChanged(void(* callback)(int))
 {
     _onSignalChanged=callback;
@@ -344,6 +349,7 @@ void SmsClass::ProcessSensors(char * message)
     {
         s[0] = 0;
     }
+    if(message[1]!='!')
     for (auto i = 1; i < strlen(message); i++)
     {
         if (message[i] == ';')
@@ -396,30 +402,31 @@ void SmsClass::ProcessSettings(char * message)
     {
         if (message[i] == ';')
         {
-            value[vi] = 0;
-            vi = 0;
-            if (ci == 0)
-            {
-                message[47 - 1] = 0;
-                strcpy(Settings.Current.SensorName, value);
+            if(vi>0){
+                value[vi] = 0;
+                vi = 0;
+                if (ci == 0)
+                {
+                    message[47 - 1] = 0;
+                    strcpy(Settings.Current.SensorName, value);
+                }
+                else if (ci == 1)
+                {
+                    Settings.Current.SirenLevel[0] = atoi(value);
+                }
+                else if (ci == 2)
+                {
+                    Settings.Current.SirenLevel[1] = atoi(value);
+                }
+                else if (ci == 3)
+                {
+                    Settings.Current.SirenLevel[2] = atoi(value);
+                }
+                else if (ci == 4)
+                {
+                    Settings.Current.WarningLevel = atoi(value);
+                }
             }
-            else if (ci == 1)
-            {
-                Settings.Current.SirenLevel[0] = atoi(value);
-            }
-            else if (ci == 2)
-            {
-                Settings.Current.SirenLevel[1] = atoi(value);
-            }
-            else if (ci == 3)
-            {
-                Settings.Current.SirenLevel[2] = atoi(value);
-            }
-            else if (ci == 4)
-            {
-                Settings.Current.WarningLevel = atoi(value);
-            }
-           
             ci++;
         } else
         {
@@ -458,10 +465,14 @@ void SmsClass::parseSMS(char* command)
     case '!':
         ProcessSensors(BUFFER);
         send(number, "!7");
+        if(_onSettingsReceived)
+            _onSettingsReceived();
         break;
     case '=':
         ProcessSettings(BUFFER);
         send(number, "==");
+        if(_onSettingsReceived)
+            _onSettingsReceived();
         break;
     case '?':
         if (!startSend(number)) return;
@@ -502,14 +513,12 @@ void SmsClass::parseData(char* command)
     if(strcmp_P(command,CallReady)==0)
     {
         _isReady = true;
-        return;
-    }
+    } else
 
     if(strcmp_P(command,NO_SIM)==0)
     {
         _simStatus = -1;
-        return;
-    }
+    } else
 
     if(startsWith("+CPIN:",command))
     {
@@ -517,33 +526,26 @@ void SmsClass::parseData(char* command)
         _simStatus = 1;
         if(strlen(simNumber)==0)
             sms->println(F("AT+CNUM"));
-        return;
-    }
+    } else
 
     if (startsWith("+CSQ:", command))
     {
         processCSQ(command);
-        return;
-    }
+    } else
 
     if(startsWith("+CNUM:",command))
     {
         parseCNUM(command);
-        return;
-    }
+    } else
 
     if (startsWith("+CREG:", command))
     {
-        _isRegistered = true;// strcmp(command, "+CREG: 0,1") == 0 || strcmp(command, "+CREG: 1,1") == 0
-            //|| strcmp(command, "+CREG: 1,5") == 0 || strcmp(command, "+CREG: 0,5") == 0
-            //|| strstr("+CREG: 5",command) || strstr("+CREG: 1",command);
-        
+        _isRegistered = true;        
         _isReady = true;
-        //_simStatus = 1;
         
         if(!(_parsingData || _smsSendStarted))
             sms->println(F("AT+CSQ"));
-    }
+    } else
 
     if (strstr_P(command,CLIP)) //Hangup call
         sms->println(F("ATH"));

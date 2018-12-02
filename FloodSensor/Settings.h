@@ -18,7 +18,7 @@ struct Config
     int WarningLevel = 0;
     char * SensorName;
     char * Location;
-    char Monitor[15];
+    char Monitor[15] = "09334875443";
     char Sensors[7][15];
     //char NotifyNumbers[4][15];
     

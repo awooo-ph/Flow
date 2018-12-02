@@ -21,35 +21,40 @@ SmsClass Sms(GSM_RX, GSM_TX);
 DisplayClass display(0x27);
 #endif
 
-uint8_t SirenPIN[3] = { 9,10,11 };
+uint8_t SirenPIN[3] = { 11,10,9 };
+bool numberSet = false;
+bool notReadySet = false;
+uint8_t _lastSimStatus = 7;
+
+int _displayIndex = -1;
 
 void OnWaterLevelChanged(uint8_t level)
 {
     display.setLevel(level);
 
     digitalWrite(SIREN_POWER, HIGH);
-    if (level == 0) return;
+    for (uint8_t pin : SirenPIN)
+        digitalWrite(pin,HIGH);
 
     delay(777);
 
+    if(level>0)
     for (auto i = 0; i < 3; i++)
     {
         auto pin = SirenPIN[i];
-        if (Settings.Current.SirenLevel[i] == level - 1)
+        if (Settings.Current.SirenLevel[i] == level)
         {
             digitalWrite(SIREN_POWER, LOW);
             delay(777);
             digitalWrite(pin, LOW);
-        }
-        else
-        {
-            digitalWrite(pin, HIGH);
+            Serial.print("LEVEL:");
+            Serial.println(level);
         }
     }
 
     char * msg = ".0";
     sprintf(msg, ".%d", level);
-    
+
     Sms.send(Settings.Current.Monitor, msg);
 
     if (Settings.Current.WarningLevel>0 && Settings.Current.WarningLevel<=level)
@@ -68,7 +73,14 @@ void SimNumberChanged()
     char number[15];
     Sms.getNumber(number);
     display.setDescription(number);
+    _displayIndex = 2;
 }
+
+void SettingsReceived()
+{
+    display.showSettingsChanged();
+}
+
 
 bool showSignal = true;
 bool displayOff = true;
@@ -78,9 +90,7 @@ uint8_t displayCount = 0;
 void setup() {
     pinMode(SIREN_POWER, OUTPUT);
     digitalWrite(SIREN_POWER, HIGH);
-    //pinMode(GSM_POWER, OUTPUT);
-    //digitalWrite(GSM_POWER, LOW);
-
+    
     Serial.begin(9600);
     
     for (auto i : SirenPIN)
@@ -104,7 +114,7 @@ void setup() {
 
     Sms.onSignalChanged(SignalChanged);
     Sms.onNumberChanged(SimNumberChanged);
-
+    Sms.onSettingsReceived(SettingsReceived);
     delay(1111);
     
     river.onLevelChange(OnWaterLevelChanged);
@@ -112,18 +122,13 @@ void setup() {
    
 }
 
-bool numberSet = false;
-bool notReadySet = false;
-uint8_t _lastSimStatus = 7;
-
-// the loop function runs over and over again until power down or reset
-int _displayIndex = -1;
 void loop() {
     river.update();
     if(Sms.modemDetected()){
         Sms.update();
 
         auto simStatus = Sms.getSimStatus();
+        
         if (simStatus == 0)
         {
             if(_displayIndex==0) return;

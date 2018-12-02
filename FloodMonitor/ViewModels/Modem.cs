@@ -139,7 +139,7 @@ namespace FloodMonitor.ViewModels
         }
 
         private bool _okReceived = false;
-        private void ProcessCommand(string command)
+        private async void ProcessCommand(string command)
         {
             if (_port == null) return;
 
@@ -176,7 +176,9 @@ namespace FloodMonitor.ViewModels
             {
                 Operator = command.Substring(8, command.IndexOf("\",") - 8);
             } else if (command.StartsWith("+CLIP:"))
+            {
                 _port.WriteLine("ATH");
+            }
             else if (command.StartsWith("+CMT:")) //New message
                 ParseSms(command);
             else if (command.StartsWith("+CMTI:"))
@@ -311,29 +313,32 @@ namespace FloodMonitor.ViewModels
             return _okReceived;
         }
 
-        private bool Start(string port)
+        private Task<bool> Start(string port)
         {
-            try
+            return Task.Factory.StartNew(() =>
             {
-                _port = new SerialPort(port,115200);
-                _port.NewLine = "\r\n";
-                _port.DtrEnable = false;
-                _port.Open();
-                        
-                _serialReader = Task.Factory.StartNew(ReadSerial);
-                return true;
-            }
-            catch (Exception )
-            {
-                return false;
-            }
+                try
+                {
+                    _port = new SerialPort(port, 115200);
+                    _port.NewLine = "\r\n";
+                    _port.DtrEnable = false;
+                    _port.Open();
+
+                    _serialReader = Task.Factory.StartNew(ReadSerial);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            });
         }
 
         public async void Start()
         {
             AddLog(ModemLog.LogTypes.Info, "Initializing modem...");
             IsBooting = true;
-            var found = Start(Config.Default.ComPort);
+            var found = await Start(Config.Default.ComPort);
 
             while (!found)
             {
@@ -347,7 +352,7 @@ namespace FloodMonitor.ViewModels
 
                 foreach (var port in ports)
                 {
-                    found = Start(port);
+                    found = await Start(port);
                     if (found)
                     {
                         Config.Default.ComPort = port;
@@ -404,28 +409,79 @@ namespace FloodMonitor.ViewModels
             }
         }
 
-        private bool _sendingMessage;
-        public async void SendMessage(string number, string message, bool log=true)
+        class OutSms
         {
-            if (!IsOnline) return;
-            if(!Config.Default.ShowAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
-            await Task.Factory.StartNew(async ()=>
+            public string Number { get; set; }
+            public string Message { get; set; }
+            public bool Log { get; set; }
+        }
+
+        private bool _sendingMessage;
+        private Task MessageTask;
+        private Queue<OutSms> Outbox = new Queue<OutSms>();
+
+        public void SendMessage(string number, string message, bool log=true)
+        {
+            if (MessageTask == null)
+                MessageTask = Task.Factory.StartNew(SendOutbox);
+            Outbox.Enqueue(new OutSms()
             {
+                Number = number,
+                Message = message,
+                Log = log
+            });
+        }
+
+        private async void SendOutbox()
+        {
+            while (true)
+            {
+                while (!IsOnline)
+                {
+                    await Task.Delay(7777);
+                }
+
+                if (Outbox.Count == 0)
+                {
+                    await Task.Delay(1111);
+                    continue;
+                }
+
+                var sms = Outbox.Dequeue();
+                if (sms == null)
+                {
+                    await Task.Delay(1111);
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(sms.Number) || string.IsNullOrEmpty(sms.Message) || !sms.Number.IsCellNumber()) continue;
+                
+                if(!Config.Default.ShowAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
+
+                while (_sendingMessage)
+                {
+                    await Task.Delay(777);
+                }
+
                 _sendingMessage = true;
                 _port.WriteLine("AT");
-                await Task.Delay(111);
-                _port.WriteLine($"AT+CMGS=\"{number}\"");
-                await Task.Delay(1111);
-                _port.WriteLine(message);
-                _port.Write($"{(char)26}");
-                _sendingMessage = false;
+                await WaitOk();
 
-                if(!Config.Default.ShowAtCommand && log) 
-                if(await WaitOk())
-                    AddLog(ModemLog.LogTypes.Info, "Message Sent!");
-                else
-                    AddLog(ModemLog.LogTypes.Info, "Sending Message Failed!");
-            });
+                    await Task.Delay(111);
+                    _port.WriteLine($"AT+CMGS=\"{sms.Number}\"");
+                    await Task.Delay(1111);
+                    _port.WriteLine(sms.Message);
+                    _port.Write($"{(char)26}");
+                
+                    if(!Config.Default.ShowAtCommand && sms.Log) 
+                        if(await WaitOk())
+                            AddLog(ModemLog.LogTypes.Info, "Message Sent!");
+                        else
+                            AddLog(ModemLog.LogTypes.Info, "Sending Message Failed!");
+
+                _sendingMessage = false;
+                await Task.Delay(1111);
+            }
         }
         
         private string _Operator;
@@ -457,7 +513,7 @@ namespace FloodMonitor.ViewModels
         private ICommand _SendMessageCommand;
 
         public ICommand SendMessageCommand =>
-            _SendMessageCommand ?? (_SendMessageCommand = new DelegateCommand(d =>
+            _SendMessageCommand ?? (_SendMessageCommand = new DelegateCommand(async d =>
             {
                 if (Config.Default.ShowAtCommand)
                 {
@@ -520,8 +576,13 @@ namespace FloodMonitor.ViewModels
         }
         
         private ICommand _sendAtCommand;
-        public ICommand SendAtCommand => _sendAtCommand ?? (_sendAtCommand = new DelegateCommand(d =>
+        public ICommand SendAtCommand => _sendAtCommand ?? (_sendAtCommand = new DelegateCommand(async d =>
         {
+            while (_sendingMessage)
+            {
+                await Task.Delay(1111);
+            }
+
             _port.WriteLine(AtCommand);
             AtCommand = "";
         },d=>(_port?.IsOpen??false) && !string.IsNullOrEmpty(AtCommand)));

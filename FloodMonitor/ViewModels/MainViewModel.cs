@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,19 @@ namespace FloodMonitor.ViewModels
 {
     class MainViewModel:ViewModelBase
     {
-        private MainViewModel(){}
+        private MainViewModel()
+        {
+            Monitor.Cache.CollectionChanged += (sender, args) =>
+            {
+                if (args.Action == NotifyCollectionChangedAction.Remove)
+                {
+                    foreach (var item in args.OldItems)
+                    {
+                        (item as Monitor)?.Delete();
+                    }
+                }
+            };
+        }
 
         private static MainViewModel _instance;
         public static MainViewModel Instance => _instance ?? (_instance = new MainViewModel());
@@ -28,6 +41,81 @@ namespace FloodMonitor.ViewModels
             }
         }
 
+        private bool _ShowLogin = true;
+
+        public bool ShowLogin
+        {
+            get => _ShowLogin;
+            set
+            {
+                if (value == _ShowLogin) return;
+                _ShowLogin = value;
+                OnPropertyChanged(nameof(ShowLogin));
+            }
+        }
+
+        private User _CurrentUser;
+
+        public User CurrentUser
+        {
+            get => _CurrentUser;
+            set
+            {
+                if (value == _CurrentUser) return;
+                _CurrentUser = value;
+                OnPropertyChanged(nameof(CurrentUser));
+                ShowLogin = value == null;
+            }
+        }
+
+        private bool _ShowSensors = true;
+
+        public bool ShowSensors
+        {
+            get => _ShowSensors;
+            set
+            {
+                if (value == _ShowSensors) return;
+                _ShowSensors = value;
+                OnPropertyChanged(nameof(ShowSensors));
+            }
+        }
+
+        private bool _ShowUsers;
+
+        public bool ShowUsers
+        {
+            get => _ShowUsers;
+            set
+            {
+                if (value == _ShowUsers) return;
+                _ShowUsers = value;
+                OnPropertyChanged(nameof(ShowUsers));
+            }
+        }
+
+        private bool _ShowResidents;
+
+        public bool ShowResidents
+        {
+            get => _ShowResidents;
+            set
+            {
+                if (value == _ShowResidents) return;
+                _ShowResidents = value;
+                OnPropertyChanged(nameof(ShowResidents));
+            }
+        }
+
+        private ICommand _resetPasswordCommand;
+
+        public ICommand ResetPasswordCommand => _resetPasswordCommand ?? (_resetPasswordCommand = new DelegateCommand(
+                                                    d =>CurrentUser.Update(nameof(CurrentUser.Password),""),
+                                                    d=>CurrentUser!=null && !string.IsNullOrEmpty(CurrentUser.Password)));
+
+        private ICommand _logoutCommand;
+        public ICommand LogoutCommand => _logoutCommand ?? (_logoutCommand = new DelegateCommand(d =>CurrentUser = null));
+        
         private ICommand _ShowSensorSettingsCommand;
 
         public ICommand ShowSensorSettingsCommand =>
@@ -37,6 +125,29 @@ namespace FloodMonitor.ViewModels
                     SelectedSensor = d;
                     ShowSensorSettings = true;
                 }));
+
+        private ICommand _ShowSettingsCommand;
+
+        public ICommand ShowSettingsCommand =>
+            _ShowSettingsCommand ?? (_ShowSettingsCommand = new DelegateCommand(d =>
+            {
+
+            }));
+
+        private bool _ShowSettings;
+
+        public bool ShowSettings
+        {
+            get => _ShowSettings;
+            set
+            {
+                if (value == _ShowSettings) return;
+                _ShowSettings = value;
+                OnPropertyChanged(nameof(ShowSettings));
+            }
+        }
+
+
 
         private ICommand _HideSensorSettingsCommand;
 

@@ -28,7 +28,12 @@
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Window.Resources>
-  <Grid>
+  <md:DialogHost Identifier="Login" CloseOnClickAway="False" DialogTheme="Light"
+                 IsOpen="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowLogin}">
+    <md:DialogHost.DialogContent>
+      <local:LoginView/>
+    </md:DialogHost.DialogContent>
+    <Grid>
     <md:DialogHost Identifier="Root">
       <md:DrawerHost IsRightDrawerOpen="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSensorSettings}">
         <md:DrawerHost.RightDrawerContent>
@@ -65,249 +70,43 @@
           </Image>
 
           <!-- Sensors -->
-          
-          <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
-            <Rectangle Fill="{DynamicResource MaterialDesignDivider}" Opacity="0.4"/>
+          <Rectangle Fill="{DynamicResource MaterialDesignDivider}" Opacity="0.4"
+                     Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"/>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                          HorizontalContentAlignment="Stretch">
-              <dragablz:DragablzItemsControl ItemsSource="{Binding Source={x:Static viewModels:Sensor.AllView}}"
-                        Focusable="False"
-                      Margin="77 40">
-                <dragablz:DragablzItemsControl.Style>
-                  <Style TargetType="{x:Type dragablz:DragablzItemsControl}">
-                    <Setter Property="ItemsPanel">
-                      <Setter.Value>
-                        <ItemsPanelTemplate>
-                          <Canvas IsItemsHost="True" />
-                        </ItemsPanelTemplate>
-                      </Setter.Value>
-                    </Setter>
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type dragablz:DragablzItemsControl}">
-                          <Border BorderThickness="{TemplateBinding Border.BorderThickness}" Padding="{TemplateBinding Control.Padding}" BorderBrush="{TemplateBinding Border.BorderBrush}" Background="{TemplateBinding Panel.Background}" SnapsToDevicePixels="True">
-                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}"
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Stretch"/>
-                          </Border>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </dragablz:DragablzItemsControl.Style>
-                <dragablz:DragablzItemsControl.PositionMonitor>
-                  <dragablz:VerticalPositionMonitor OrderChanged="StackPositionMonitor_OnOrderChanged"/>
-                </dragablz:DragablzItemsControl.PositionMonitor>
-                <dragablz:DragablzItemsControl.ItemsOrganiser>
-                  <dragablz:VerticalOrganiser/>
-                </dragablz:DragablzItemsControl.ItemsOrganiser>
-                <dragablz:DragablzItemsControl.ItemContainerStyle>
-                  <Style TargetType="dragablz:DragablzItem">
-                    <Setter Property="Width" Value="{Binding RelativeSource={RelativeSource AncestorType=Border},Path=ActualWidth}"/>
-                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                    <!-- here we create a custom item container, to animate a card popping out towards the user as it is dragged -->
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type dragablz:DragablzItem}">
-                          <ControlTemplate.Resources>
-                            <SineEase x:Key="Ease" EasingMode="EaseInOut" />
-                          </ControlTemplate.Resources>
-                          <Grid RenderTransformOrigin=".5, .5" HorizontalAlignment="Stretch">
-                            <md:Card Content="{TemplateBinding ContentControl.Content}"
-                                     ContentTemplate="{TemplateBinding ContentControl.ContentTemplate}"
-                                     SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}"
-                                     HorizontalAlignment="Stretch"
-                                     VerticalAlignment="Stretch"
-                                     x:Name="Card"
-                                     md:ShadowAssist.ShadowDepth="Depth2" 
-                                     Margin="20" 
-                                     UniformCornerRadius="4"/>
-                            <Grid.RenderTransform>
-                              <ScaleTransform x:Name="ScaleTransform" ScaleX="1" ScaleY="1" />
-                            </Grid.RenderTransform>
-                          </Grid>
-                          <ControlTemplate.Triggers>
-                            <Trigger Property="IsDragging" Value="True">
-                              <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                  <Storyboard>
-                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ScaleTransform" Storyboard.TargetProperty="ScaleX">
-                                      <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="1.12" EasingFunction="{StaticResource Ease}" />
-                                    </DoubleAnimationUsingKeyFrames>
-                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ScaleTransform" Storyboard.TargetProperty="ScaleY">
-                                      <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="1.12" EasingFunction="{StaticResource Ease}" />
-                                    </DoubleAnimationUsingKeyFrames>
-                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Card" Storyboard.TargetProperty="(md:ShadowAssist.ShadowDepth)">
-                                      <DiscreteObjectKeyFrame KeyTime="0:0:0.08" Value="{x:Static md:ShadowDepth.Depth2}" />
-                                      <DiscreteObjectKeyFrame KeyTime="0:0:0.12" Value="{x:Static md:ShadowDepth.Depth3}" />
-                                      <DiscreteObjectKeyFrame KeyTime="0:0:0.16" Value="{x:Static md:ShadowDepth.Depth4}" />
-                                    </ObjectAnimationUsingKeyFrames>
-                                  </Storyboard>
-                                </BeginStoryboard>
-                              </Trigger.EnterActions>
-                              <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                  <Storyboard>
-                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ScaleTransform" Storyboard.TargetProperty="ScaleX">
-                                      <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="1" EasingFunction="{StaticResource Ease}" />
-                                    </DoubleAnimationUsingKeyFrames>
-                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ScaleTransform" Storyboard.TargetProperty="ScaleY">
-                                      <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="1" EasingFunction="{StaticResource Ease}" />
-                                    </DoubleAnimationUsingKeyFrames>
-                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Card" Storyboard.TargetProperty="(md:ShadowAssist.ShadowDepth)">
-                                      <DiscreteObjectKeyFrame KeyTime="0:0:0.12" Value="{x:Static md:ShadowDepth.Depth4}" />
-                                      <DiscreteObjectKeyFrame KeyTime="0:0:0.16" Value="{x:Static md:ShadowDepth.Depth3}" />
-                                      <DiscreteObjectKeyFrame KeyTime="0:0:0.22" Value="{x:Static md:ShadowDepth.Depth2}" />
-                                    </ObjectAnimationUsingKeyFrames>
+            <local:Sensors Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+                Visibility="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSensors,Converter={converters:BooleanToVisibility}}"/>
 
-                                  </Storyboard>
-                                </BeginStoryboard>
-                              </Trigger.ExitActions>
-                            </Trigger>
-                          </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </dragablz:DragablzItemsControl.ItemContainerStyle>
-                <dragablz:DragablzItemsControl.ItemTemplate>
-                  <DataTemplate DataType="{x:Type viewModels:Sensor}">
+          <local:Residents Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+                         Visibility="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowResidents,Converter={converters:BooleanToVisibility}}"/>
+          <local:Users Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+                           Visibility="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowUsers,Converter={converters:BooleanToVisibility}}"/>
+          <local:SettingsView Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+                              IsEnabled="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
+                       Visibility="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSettings,Converter={converters:BooleanToVisibility}}"/>
 
-                    <Grid Height="174" HorizontalAlignment="Stretch">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto" MinWidth="74"/>
-                      </Grid.ColumnDefinitions>
 
-                      <lv:CartesianChart Margin="7 10 -27 0" Pan="X" Background="{x:Null}"
-                                         Zoom="X" UseLayoutRounding="False"
-                                         DisableAnimations="False">
-                        <lv:CartesianChart.AxisY>
-                          <lv:Axis MaxValue="7" MinValue="-1">
-                            <lv:Axis.Separator>
-                              <lv:Separator Step="1" SnapsToDevicePixels="True"/>
-                            </lv:Axis.Separator>
-                          </lv:Axis>
-                        </lv:CartesianChart.AxisY>
-                        <lv:CartesianChart.AxisX>
-                          <lv:Axis LabelFormatter="{Binding LabelFormatter}"/>
-                        </lv:CartesianChart.AxisX>
-                        <lv:CartesianChart.Series>
-                          <lv:LineSeries Values="{Binding WaterLevels}" PointGeometry="{x:Null}" Title="LEVEL"
-                                         LineSmoothness="0.7" SnapsToDevicePixels="True"/>
-                        </lv:CartesianChart.Series>
-                      </lv:CartesianChart>
+            <StackPanel Orientation="Horizontal" Grid.Column="1" Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Center"
+                         DataContext="{Binding Source={x:Static viewModels:MainViewModel.Instance}}">
+              <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                           Content="SENSORS" IsChecked="{Binding ShowSensors}"/>
+              <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                           Content="RESIDENTS" IsChecked="{Binding ShowResidents}"/>
+              <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                           Content="USERS" IsChecked="{Binding ShowUsers}"/>
+              <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}"
+                           IsEnabled="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
+                           Content="SETTINGS" IsChecked="{Binding ShowSettings}"/>
+            </StackPanel>
 
-                      <Grid VerticalAlignment="Top"
-                          IsHitTestVisible="False"
-                          Grid.ColumnSpan="2"
-                            Margin="47 10 0 0"
-                              Grid.Column="0"
-                          HorizontalAlignment="Left">
-                        <Rectangle Fill="{DynamicResource MaterialDesignPaper}" Opacity="0.7"/>
-                        <StackPanel Margin="0 4 4 4">
-                          <TextBlock Text="{Binding SensorName}" Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                                     Margin="0 0 0 0"/>
-                          <TextBlock Text="{Binding Location}" Opacity="0.7"/>
-                        </StackPanel>
-                      </Grid>
 
-                      <Grid HorizontalAlignment="Right"
-                          Background="{DynamicResource MaterialDesignPaper}"
-                           Grid.Column="0" Margin="0 4 4 0"
-                           VerticalAlignment="Top">
-                        <StackPanel Orientation="Horizontal"
-                                  Opacity="{Binding RelativeSource={RelativeSource AncestorType={x:Type md:Card}},Path=IsMouseOver,Converter={converters:BooleanToObject 1, 0.2}}">
-                          <Button Content="{md:PackIcon Pencil}" Command="{Binding EditCommand}"
-                                ToolTip="Edit Sensor"
-                                Style="{DynamicResource MaterialDesignToolButton}"/>
-                          <Button Content="{md:PackIcon Delete}" Command="{Binding DeleteCommand}"
-                                ToolTip="Delete Sensor"
-                                Style="{DynamicResource MaterialDesignToolButton}"/>
-                          <Button Content="{md:PackIcon Settings}" 
-                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=ShowSensorSettingsCommand}"
-                                CommandParameter="{Binding}"
-                                ToolTip="Settings"
-                                Style="{DynamicResource MaterialDesignToolButton}"/>
-                        </StackPanel>
-                      </Grid>
-
-                      <Slider HorizontalAlignment="Left" Grid.Column="0" 
-                            ToolTip="Water Level Threshold"
-                            Margin="4 10 0 30"
-                            Value="{Binding WarningLevel}"
-                            TickFrequency="1" IsSnapToTickEnabled="True"
-                            Style="{DynamicResource MaterialDesignDiscreteSlider}"
-                            Orientation="Vertical" Maximum="5" Minimum="0" TickPlacement="TopLeft">
-                        <Slider.Resources>
-                          <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="{StaticResource ValidationErrorColor}"/>
-                        </Slider.Resources>
-                      </Slider>
-
-                      <Thumb  dragablz:DragablzItem.IsCustomThumb="True"
-                             Opacity="{Binding RelativeSource={RelativeSource AncestorType={x:Type md:Card}},Path=IsMouseOver,Converter={converters:BooleanToObject 1,0.4}}"
-                             Grid.Column="0" HorizontalAlignment="Left"
-                             Cursor="ScrollNS"
-                             Margin="10"
-                              ToolTip="Drag to move up or down"
-                             VerticalAlignment="Top">
-                        <Thumb.Template>
-                          <ControlTemplate>
-                            <Grid Background="Transparent" >
-                              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <md:PackIcon Kind="ChevronUpDown"/>
-                              </StackPanel>
-                            </Grid>
-                          </ControlTemplate>
-                        </Thumb.Template>
-                      </Thumb>
-
-                      <Rectangle Width="1" Fill="{DynamicResource MaterialDesignDivider}"
-                                 IsHitTestVisible="False"
-                               HorizontalAlignment="Right"
-                               Grid.Column="0"/>
-
-                      <Grid Grid.Column="1" IsHitTestVisible="False">
-                        <Grid.RowDefinitions>
-                          <RowDefinition Height="Auto"/>
-                          <RowDefinition Height="*"/>
-                          <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="WATER LEVEL" Margin="10" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding WaterLevel}"
-                                 Visibility="{Binding IsWarning,Converter={converters:BooleanToVisibility Collapsed,Visible}}"
-                                 Grid.Row="1"
-                                 HorizontalAlignment="Center"
-                                 Margin="20 10"
-                                 FontSize="47pt" FontWeight="Bold"
-                                 VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding WaterLevel}"
-                                 Visibility="{Binding IsWarning,Converter={converters:BooleanToVisibility}}"
-                                 Foreground="{DynamicResource ValidationErrorBrush}"
-                                 Grid.Row="1"
-                                 HorizontalAlignment="Center"
-                                 Margin="20 10"
-                                 FontSize="47pt" FontWeight="Bold"
-                                 VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding LastHeartBeatText}" Margin="10" HorizontalAlignment="Center"
-                                 Grid.Row="2"/>
-                      </Grid>
-                    </Grid>
-
-                  </DataTemplate>
-                </dragablz:DragablzItemsControl.ItemTemplate>
-              </dragablz:DragablzItemsControl>
-            </ScrollViewer>
-
-            <Button HorizontalAlignment="Right" VerticalAlignment="Bottom"
-              Focusable="False"
-              Style="{DynamicResource MaterialDesignFloatingActionButton}"
-              Content="{md:PackIcon Plus}"
-              Command="{Binding Source={x:Static viewModels:Sensor.AddCommand}}"
-              Margin="20"/>
-          </Grid>
+            <Menu Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="10"
+                        DataContext="{Binding Source={x:Static viewModels:MainViewModel.Instance}}">
+              <MenuItem Header="{Binding CurrentUser.Username}">
+                <MenuItem Header="_Reset Password" Command="{Binding ResetPasswordCommand}"/>
+                <MenuItem Header="_Logout" Command="{Binding LogoutCommand}"/>
+              </MenuItem>
+            </Menu>
           
         </Grid>
       </md:DrawerHost>
@@ -316,4 +115,5 @@
     <md:Snackbar VerticalAlignment="Bottom" HorizontalAlignment="Center"
                  MessageQueue="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=MessageQueue}"/>
   </Grid>
+  </md:DialogHost>
 </Window>

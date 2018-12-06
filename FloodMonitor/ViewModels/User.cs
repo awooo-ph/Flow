@@ -15,7 +15,8 @@ namespace FloodMonitor.ViewModels
         }
 
         private string _Username;
-
+        [Unique]
+        [Required]
         public string Username
         {
             get => _Username;
@@ -28,7 +29,7 @@ namespace FloodMonitor.ViewModels
         }
 
         private string _Password;
-
+        
         public string Password
         {
             get => _Password;

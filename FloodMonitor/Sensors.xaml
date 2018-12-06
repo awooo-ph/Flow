@@ -11,6 +11,7 @@
              xmlns:converters="clr-namespace:FloodMonitor.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+  
     <Grid>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                           HorizontalContentAlignment="Stretch">
@@ -158,6 +159,7 @@
               </Grid>
 
               <Grid HorizontalAlignment="Right"
+                    IsEnabled="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
                           Background="{DynamicResource MaterialDesignPaper}"
                            Grid.Column="0" Margin="0 4 4 0"
                            VerticalAlignment="Top">
@@ -179,6 +181,7 @@
 
               <Slider HorizontalAlignment="Left" Grid.Column="0" 
                             ToolTip="Water Level Threshold"
+                      IsHitTestVisible="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
                             Margin="4 10 0 30"
                             Value="{Binding WarningLevel}"
                             TickFrequency="1" IsSnapToTickEnabled="True"
@@ -190,6 +193,7 @@
               </Slider>
 
               <Thumb  dragablz:DragablzItem.IsCustomThumb="True"
+                      Visibility="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin,Converter={converters:BooleanToVisibility}}"
                              Opacity="{Binding RelativeSource={RelativeSource AncestorType={x:Type materialDesign:Card}},Path=IsMouseOver,Converter={converters:BooleanToObject 1,0.4}}"
                              Grid.Column="0" HorizontalAlignment="Left"
                              Cursor="ScrollNS"
@@ -251,4 +255,5 @@
               Command="{Binding Source={x:Static viewModels:Sensor.AddCommand}}"
               Margin="20"/>
   </Grid>
+  
 </UserControl>

@@ -5,7 +5,10 @@
         
     }
 
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public class RequiredAttribute : Attribute { }
+public class UniqueAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class FieldAttribute : Attribute {
         public FieldAttribute(string fieldName)
         {

@@ -82,7 +82,7 @@ namespace FloodMonitor.ViewModels
             }
 
             sensor.Save();
-        }));
+        },d=>MainViewModel.Instance.CurrentUser?.IsAdmin??false));
 
         private string _Number;
         public string Number
@@ -105,7 +105,9 @@ namespace FloodMonitor.ViewModels
             {
                 if (value == _WarningLevel) return;
                 _WarningLevel = value;
-                
+                if (_WarningLevel > 5) _WarningLevel = 5;
+                if (_WarningLevel < 0) _WarningLevel = 0;
+
                 OnPropertyChanged(nameof(WarningLevel));
                 OnPropertyChanged(nameof(IsWarning));
 
@@ -422,13 +424,156 @@ namespace FloodMonitor.ViewModels
             base.OnSaved();
         }
 
+        private string _Level1Message;
+
+        public string Level1Message
+        {
+            get => _Level1Message;
+            set
+            {
+                if (value == _Level1Message) return;
+                _Level1Message = value;
+                OnPropertyChanged(nameof(Level1Message));
+            }
+        }
+
+        private string _Level2Message;
+
+        public string Level2Message
+        {
+            get => _Level2Message;
+            set
+            {
+                if (value == _Level2Message) return;
+                _Level2Message = value;
+                OnPropertyChanged(nameof(Level2Message));
+            }
+        }
+
+        private string _Level3Message;
+
+        public string Level3Message
+        {
+            get => _Level3Message;
+            set
+            {
+                if (value == _Level3Message) return;
+                _Level3Message = value;
+                OnPropertyChanged(nameof(Level3Message));
+            }
+        }
+
+        private string _Level4Message;
+
+        public string Level4Message
+        {
+            get => _Level4Message;
+            set
+            {
+                if (value == _Level4Message) return;
+                _Level4Message = value;
+                OnPropertyChanged(nameof(Level4Message));
+            }
+        }
+
+        private string _Level5Message;
+
+        public string Level5Message
+        {
+            get => _Level5Message;
+            set
+            {
+                if (value == _Level5Message) return;
+                _Level5Message = value;
+                OnPropertyChanged(nameof(Level5Message));
+            }
+        }
+
+        private string _WarningMessage;
+
+        public string WarningMessage
+        {
+            get => _WarningMessage;
+            set
+            {
+                if (value == _WarningMessage) return;
+                _WarningMessage = value;
+                OnPropertyChanged(nameof(WarningMessage));
+            }
+        }
+
+        private bool _NotifyLevel1;
+
+        public bool NotifyLevel1
+        {
+            get => _NotifyLevel1;
+            set
+            {
+                if (value == _NotifyLevel1) return;
+                _NotifyLevel1 = value;
+                OnPropertyChanged(nameof(NotifyLevel1));
+            }
+        }
+
+        private bool _NotifyLevel2;
+
+        public bool NotifyLevel2
+        {
+            get => _NotifyLevel2;
+            set
+            {
+                if (value == _NotifyLevel2) return;
+                _NotifyLevel2 = value;
+                OnPropertyChanged(nameof(NotifyLevel2));
+            }
+        }
+
+        private bool _NotifyLevel3;
+
+        public bool NotifyLevel3
+        {
+            get => _NotifyLevel3;
+            set
+            {
+                if (value == _NotifyLevel3) return;
+                _NotifyLevel3 = value;
+                OnPropertyChanged(nameof(NotifyLevel3));
+            }
+        }
+
+        private bool _NotifyLevel4;
+
+        public bool NotifyLevel4
+        {
+            get => _NotifyLevel4;
+            set
+            {
+                if (value == _NotifyLevel4) return;
+                _NotifyLevel4 = value;
+                OnPropertyChanged(nameof(NotifyLevel4));
+            }
+        }
+
+        private bool _NotifyLevel5;
+
+        public bool NotifyLevel5
+        {
+            get => _NotifyLevel5;
+            set
+            {
+                if (value == _NotifyLevel5) return;
+                _NotifyLevel5 = value;
+                OnPropertyChanged(nameof(NotifyLevel5));
+            }
+        }
+        
         public void SendSensors()
         {
             var sensors = Cache.Where(x => x.Order > Order).Take(7).ToList();
-            if(sensors.Count==0)
-                Modem.Instance.SendMessage(Number,$"!!\rhttps://goo.gl/RBy5eb");
-            else
-                Modem.Instance.SendMessage(Number,$"!{string.Join(";",sensors)};\rhttps://goo.gl/RBy5eb");
+            Modem.Instance.SendMessage(Number,
+                sensors.Count == 0
+                    ? "!!\rhttps://goo.gl/RBy5eb"
+                    : $"!{string.Join(";", sensors)};\rhttps://goo.gl/RBy5eb");
         }
 
         private WaterLevel _LatestLevel;

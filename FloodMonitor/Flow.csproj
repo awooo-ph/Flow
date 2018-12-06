@@ -92,6 +92,7 @@
     <Compile Include="Converters\BooleanToObject.cs" />
     <Compile Include="Converters\BooleanToVisibility.cs" />
     <Compile Include="Converters\ConverterBase.cs" />
+    <Compile Include="Converters\Inverter.cs" />
     <Compile Include="Converters\LogTypeConverter.cs" />
     <Compile Include="Converters\SensorDialogTitleConverter.cs" />
     <Compile Include="Data\Connection.cs" />
@@ -104,6 +105,9 @@
     <Compile Include="LeftContent.xaml.cs">
       <DependentUpon>LeftContent.xaml</DependentUpon>
     </Compile>
+    <Compile Include="LoginView.xaml.cs">
+      <DependentUpon>LoginView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MessageDialog.xaml.cs">
       <DependentUpon>MessageDialog.xaml</DependentUpon>
     </Compile>
@@ -112,8 +116,20 @@
     <Compile Include="NewSensorDialog.xaml.cs">
       <DependentUpon>NewSensorDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Residents.xaml.cs">
+      <DependentUpon>Residents.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Sensors.xaml.cs">
+      <DependentUpon>Sensors.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SensorSettings.xaml.cs">
       <DependentUpon>SensorSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SettingsView.xaml.cs">
+      <DependentUpon>SettingsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Users.xaml.cs">
+      <DependentUpon>Users.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\ModemLog.cs" />
@@ -123,9 +139,14 @@
     <Compile Include="Sms.cs" />
     <Compile Include="ViewModels\Monitor.cs" />
     <Compile Include="ViewModels\Sensor.cs" />
+    <Compile Include="ViewModels\User.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\WaterLevel.cs" />
     <Page Include="LeftContent.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LoginView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -149,7 +170,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Residents.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Sensors.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SensorSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SettingsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Users.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -69,11 +69,15 @@ namespace FloodMonitor
                     Username = Username.Text,
                     Password = PasswordBox.Password,
                     Fullname = "Administrator",
-                    Position = "ADMIN"
+                    Position = "ADMIN",
+                    IsAdmin = true
                 };
                 user.Save();
             } else 
             user = User.Cache.FirstOrDefault(x => x.Username.ToLower() == Username.Text.ToLower());
+
+            if (user != null && string.IsNullOrEmpty(user.Password))
+                user.Update(nameof(user.Password), PasswordBox.Password);
 
             if (user?.Password!=PasswordBox.Password)
             {

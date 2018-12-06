@@ -86,6 +86,22 @@
                        md:HintAssist.Hint="WATER LEVEL"
                        md:HintAssist.IsFloating="True"/>
         </Grid>
+        <Grid Margin="20 40 20 20">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                       Text="LIGHT ALARM"/>
+            <TextBlock Text="Water level to activate strobe light alarm." Opacity="0.7"/>
+          </StackPanel>
+          <TextBox Text="{Binding WarningLevel,ValidatesOnExceptions=True,ValidatesOnDataErrors=True,UpdateSourceTrigger=PropertyChanged}"
+                   Grid.Column="1"
+                   VerticalAlignment="Center"
+                   md:HintAssist.Hint="WATER LEVEL"
+                   md:HintAssist.IsFloating="True"/>
+        </Grid>
       </StackPanel>
     </ScrollViewer>
     <UniformGrid Grid.Row="2" HorizontalAlignment="Right"

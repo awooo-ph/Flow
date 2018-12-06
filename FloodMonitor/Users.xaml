@@ -4,9 +4,27 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:FloodMonitor"
+             xmlns:viewModels="clr-namespace:FloodMonitor.ViewModels"
+             xmlns:converters="clr-namespace:FloodMonitor.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-            
-    </Grid>
+    <DataGrid AutoGenerateColumns="False" ItemsSource="{Binding Source={x:Static viewModels:User.Cache}}"
+              Margin="47 74 47 47"
+              IsReadOnly="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin,Converter={converters:Inverter}}"
+              CanUserAddRows="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
+              CanUserDeleteRows="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="USERNAME" Binding="{Binding Username,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
+                            EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"/>
+        <DataGridTextColumn Header="NAME" Binding="{Binding Fullname,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
+                            EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"/>
+        <DataGridTextColumn Header="POSITION" Binding="{Binding Position,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
+                            EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"/>
+        <DataGridCheckBoxColumn Header="ADMIN"
+                                Binding="{Binding IsAdmin,UpdateSourceTrigger=PropertyChanged}"
+                                EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"/>
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
 </UserControl>

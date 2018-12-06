@@ -110,6 +110,87 @@ namespace FloodMonitor
             }
         }
 
+        private string _Level1Message;
+        [Trackable]
+        public string Level1Message
+        {
+            get => _Level1Message;
+            set
+            {
+                if (value == _Level1Message) return;
+                _Level1Message = value;
+                OnPropertyChanged(nameof(Level1Message));
+            }
+        }
+
+        private string _Level2Message;
+        [Trackable]
+        public string Level2Message
+        {
+            get => _Level2Message;
+            set
+            {
+                if (value == _Level2Message) return;
+                _Level2Message = value;
+                OnPropertyChanged(nameof(Level2Message));
+            }
+        }
+
+        private string _Level3Message;
+        [Trackable]
+        public string Level3Message
+        {
+            get => _Level3Message;
+            set
+            {
+                if (value == _Level3Message) return;
+                _Level3Message = value;
+                OnPropertyChanged(nameof(Level3Message));
+            }
+        }
+
+        private string _Level4Message;
+        [Trackable]
+        public string Level4Message
+        {
+            get => _Level4Message;
+            set
+            {
+                if (value == _Level4Message) return;
+                _Level4Message = value;
+                OnPropertyChanged(nameof(Level4Message));
+            }
+        }
+
+        private string _Level5Message;
+        [Trackable]
+        public string Level5Message
+        {
+            get => _Level5Message;
+            set
+            {
+                if (value == _Level5Message) return;
+                _Level5Message = value;
+                OnPropertyChanged(nameof(Level5Message));
+            }
+        }
+
+        private bool _SendSms;
+        [Trackable]
+        public bool SendSms
+        {
+            get => _SendSms;
+            set
+            {
+                if (value == _SendSms) return;
+                _SendSms = value;
+                OnPropertyChanged(nameof(SendSms));
+            }
+        }
+
+
+
+
         private ICommand _ToggleLogCommand;
 
         public ICommand ToggleLogCommand => _ToggleLogCommand ?? (_ToggleLogCommand = new DelegateCommand(d =>

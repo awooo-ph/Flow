@@ -30,31 +30,9 @@ namespace FloodMonitor
            
             awooo.Context = SynchronizationContext.Current;
 
-            AddHandler(DragablzItem.DragCompleted, new DragablzDragCompletedEventHandler(ItemDragCompleted), true);        
+                
         }
 
-        private object[] _order;
         
-        private void ItemDragCompleted(object sender, DragablzDragCompletedEventArgs e)
-        {
-            var item = e.DragablzItem.DataContext;
-            
-            if (_order == null) return;
-
-            for(var i=0L;i < _order.Length;i++)
-            {
-                var sensor = ((Sensor) _order[i]);
-                if (sensor.Order != i + 1)
-                {
-                    sensor.Order = i + 1;
-                    sensor.Save();
-                }
-            }
-        }
-
-        private void StackPositionMonitor_OnOrderChanged(object sender, OrderChangedEventArgs e)
-        {
-            _order = e.NewOrder;
-        }
     }
 }

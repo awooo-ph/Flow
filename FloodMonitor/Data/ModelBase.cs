@@ -228,8 +228,20 @@ using FastMember;
 
         protected virtual string GetErrorInfo(string prop)
         {
+        var type = TypeAccessor.Create(typeof(T));
+            var required = type.GetMembers().FirstOrDefault(x => x.Name == prop)?.IsDefined(typeof(RequiredAttribute)) ?? false;
+            if (required && string.IsNullOrEmpty(this[prop]?.ToString()))
+                return "REQUIRED";
+
+            var unique = type.GetMembers().FirstOrDefault(x => x.Name == prop)?.IsDefined(typeof(UniqueAttribute)) ?? false;
+            if (unique)
+            {
+                var model = Db.GetBy<T>(prop, this[prop]);
+                if (model != null && model.Id != Id) return "MUST BE UNIQUE";
+            }
+
             return null;
-        }
+    }
 
         protected abstract bool GetIsEmpty();
 

@@ -11,9 +11,21 @@
     <Grid>
     <DataGrid AutoGenerateColumns="False" ItemsSource="{Binding Source={x:Static viewModels:Monitor.Cache}}"
               Margin="47 74 47 47"
-              CanUserAddRows="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
-              CanUserDeleteRows="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}">
+              CanUserAddRows="True">
       <DataGrid.Columns>
+        <DataGridTemplateColumn>
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <Button Command="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=DeleteMonitorCommand}"
+                      CommandParameter="{Binding}"
+                      Style="{StaticResource MaterialDesignFlatButton}"
+                      Padding="0" VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch"
+                      Height="Auto"
+                      Content="{md:PackIcon Delete}"/>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
         <DataGridTextColumn Header="NAME" Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
                             EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"/>
         <DataGridTextColumn Header="CONTACT NUMBER" Binding="{Binding Number,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"

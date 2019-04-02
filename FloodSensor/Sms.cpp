@@ -1,18 +1,25 @@
 #include "Sms.h"
 
+#define DEBUG_SERIAL
+
 //const char AT[]     PROGMEM = "AT\r";
 //const char CMGD[]   PROGMEM = "AT+CMGD=1,1\r";
-const char CPIN[]   PROGMEM = "AT+CPIN?\r";
-const char CREG1[]  PROGMEM = "AT+CREG=1\r";            // Network Registration
+//const char CPIN[]   PROGMEM = "AT+CPIN?\r";
+//const char CREG1[]  PROGMEM = "AT+CREG=1\r";            // Network Registration
 //const char CSMS[]   PROGMEM = "AT+CSMS=1\r";            // Select Message Service
 //const char CNMI[]   PROGMEM = "AT+CNMI=2,2,0,0,0\r";    // New Message Indication
 //const char CMGF[]   PROGMEM = "AT+CMGF=1\r";            // Select Message Format (0:PDU; 1:TEXT)
 //const char CSCS[]   PROGMEM = "AT+CSCS=\"GSM\"\r";      // Select Character Set
-const char OK[]     PROGMEM = "OK";
-const char ERROR[]  PROGMEM = "ERROR";
-const char CallReady[]  PROGMEM = "Call Ready";
-const char CLIP[]  PROGMEM = "+CLIP:";
-const char NO_SIM[] PROGMEM = "+CME ERROR: SIM not inserted";
+//const char OK[]     PROGMEM = "OK";
+//const char ERROR[]  PROGMEM = "ERROR";
+//const char CallReady[]  PROGMEM = "Call Ready";
+//const char CLIP[]  PROGMEM = "+CLIP:";
+//const char NO_SIM[] PROGMEM = "+CME ERROR: SIM not inserted";
+
+#define CMD_CPIN 1
+#define CMD_CREG 2
+#define CMD_CNUM 3
+#define CMD_CSQ 4
 
 //const char* const COMMANDS[] PROGMEM = { AT,CPIN, CREG1,CSMS,CNMI,CMGF,CSCS };
 
@@ -52,32 +59,59 @@ void SmsClass::parseCNUM(char* data)
     }
 }
 
-SmsClass::SmsClass(uint8_t rx, uint8_t tx)
+SmsClass::SmsClass()
 {
-    sms = new SoftwareSerial(rx, tx);
+   // sms = new SoftwareSerial(8,9);
 }
 
 bool SmsClass::init()
 {
     if (_isReady) return true;
-    
-    sms->begin(9600);
+#ifdef DEBUG_SERIAL
+    Serial.println(F("Initializing Modem..."));
+#endif
+    sms.begin(9600);
     
     unsigned int start = millis();
-    while (!sms)
+   /* while (!sms)
     {
         if(millis()-start>7777)
         {
             _modemDetected = false;
             return false;
         }
-    }
+    }*/
 
-    sms->println(F("AT"));
+    delay(2222);
+
+    sms.println("AT");
     
     _initStart = millis();
-    //_modemDetected = waitOk();
-    //return _modemDetected;
+    _modemDetected = waitOk();
+
+    sms.println("AT+CNMI=2,2,0,0,0");
+    waitOk();
+    sms.println("AT+CMGF=1");
+    waitOk();
+    sms.println("AT+CSCS=\"GSM\"");
+    waitOk();
+    sms.println("AT+CSMS=1");
+    waitOk();
+    sms.println("AT+CMGD=1,1");
+    waitOk();
+#ifdef DEBUG_SERIAL
+    if(_modemDetected)
+        Serial.print(F("\nModem Initialized!"));
+    else
+        Serial.print(F("\nModem not Detected"));
+#endif
+
+    return _modemDetected;
+}
+
+void SmsClass::onAlarm(void(* callback)())
+{
+    _onAlarm = callback;
 }
 
 void SmsClass::onSettingsReceived(void(* callback)())
@@ -98,11 +132,14 @@ void SmsClass::onNumberChanged(void(* callback)())
 bool SmsClass::readLine()
 {
     //while(true){
-        while(sms->available()>0){
-            byte b = sms->read();
+        while(sms.available()>0){
+            byte b = sms.read();
+            delay(10);
             if(b==0) continue;
             _modemDetected = true;
+#ifdef DEBUG_SERIAL
             Serial.write(b);
+#endif
 
             if (b == '\n' || b == '\r') {
                 BUFFER[BUFFER_INDEX] = '\0';
@@ -137,23 +174,34 @@ void SmsClass::update()
     
     checkSIM();
 
-    if(sms->available())
+    if(sms.available())
         if(readLine()) parseData(BUFFER);
 
-
+#ifdef DEBUG_SERIAL
     while (Serial.available())
     {
-        sms->write(Serial.read());
+        sms.write(Serial.read());
+        delay(10);
     }
+#endif
 
-
-    auto timeout = 44777;
-    if(_isReady && millis()-_lastCSQ>timeout)
+    if(_isReady)
     {
-        _lastCSQ = millis();
-        sms->println(F("AT+CSQ"));
+        requestCSQ();
     }
 }
+
+void SmsClass::requestCSQ()
+{
+    if(_parsingData || _smsSendStarted || !_isReady) return;
+    if(millis()-_lastCommand < 4444) return;
+    if(millis()-_lastCSQ<4444) return;
+    _lastCSQ = millis();
+    lastCommand = CMD_CSQ;
+    _lastCommand = millis();
+    sms.print("AT+CSQ\r");
+}
+
 
 void SmsClass::send(char* number, char* text)
 {
@@ -168,10 +216,10 @@ void SmsClass::send(char* number, char* text)
 
 void SmsClass::getIMEI(char * imei)
 {
-    if(_parsingData || _smsSendStarted) return;
-    sms->println(F("AT+GSN"));
-    while(!readLine()){}
-    strcpy(imei,BUFFER);
+    //if(_parsingData || _smsSendStarted) return;
+    //sms.println("AT+GSN");
+    //while(!readLine()){}
+    //strcpy(imei,BUFFER);
 }
 
 bool SmsClass::startSend(char* number)
@@ -180,9 +228,9 @@ bool SmsClass::startSend(char* number)
     if (!number || strlen(number) ==0) return false;
     if (_smsSendStarted) return false;
     _smsSendStarted = true;
-    sms->print(F("AT+CMGS=\""));
-    sms->print(number);
-    sms->print(F("\"\r"));
+    sms.print("AT+CMGS=\"");
+    sms.print(number);
+    sms.print("\"\r");
     delay(1111);
     return true;
 }
@@ -190,30 +238,24 @@ bool SmsClass::startSend(char* number)
 bool SmsClass::write(char* message)
 {
     if (!_smsSendStarted) return false;
-    sms->write(message);
+    sms.write(message);
     return true;
 }
 
 bool SmsClass::write(char text)
 {
     if (!_smsSendStarted) return false;
-    sms->write(text);
+    sms.write(text);
     return true;
 }
 
 bool SmsClass::commitSend()
 {
     if (!_smsSendStarted) return false;
-    sms->println();
-    sms->println(F("https://goo.gl/RBy5eb"));
-    sms->write(26);
-    auto ok = waitOk();
-    #ifdef DEBUG
-    if (ok)
-        Serial.println(F("\nMessage Sent!"));
-    else
-        Serial.println(F("\nMessage sending failed!"));
-#endif
+    sms.println();
+    sms.println("https://goo.gl/RBy5eb");
+    sms.write(26);
+    waitOk();
     _smsSendStarted = false;
     return true;
 }
@@ -221,9 +263,9 @@ bool SmsClass::commitSend()
 void SmsClass::cancelSend()
 {
     if(!_smsSendStarted) return;
-    sms->println(F("777"));
-    sms->println(F("777"));
-    sms->write(3);
+    sms.println("777");
+    sms.println("777");
+    sms.write(3);
 }
 
 void SmsClass::restart()
@@ -240,18 +282,18 @@ void SmsClass::getNumber(char *number)
 //void SmsClass::readUnread()
 //{
     /*if(_parsingData || _smsSendStarted) return;
-    sms->println(F("AT+CMGL=\"REC UNREAD\""));*/
+    sms.println(F("AT+CMGL=\"REC UNREAD\""));*/
 //}
 
 //void SmsClass::sendWarning(uint8_t level)
 //{
     /*for (auto number : Settings.Current.NotifyNumbers){
         if(!startSend(number)) return;
-        sms->print(F("WARNING! Water level at "));
-        sms->print(Settings.Current.SensorName);
-        sms->print(F(" has reached to LEVEL "));
-        sms->print(level);
-        sms->print(F("."));
+        sms.print(F("WARNING! Water level at "));
+        sms.print(Settings.Current.SensorName);
+        sms.print(F(" has reached to LEVEL "));
+        sms.print(level);
+        sms.print(F("."));
         commitSend();
         delay(777);
     }*/
@@ -267,10 +309,10 @@ bool SmsClass::waitOk()
         if(!readLine())continue;
 
         if (BUFFER && strlen(BUFFER) > 0) {
-            if (strcasecmp_P(BUFFER, OK) == 0)
+            if (strcasecmp(BUFFER, "OK") == 0)
                 return true;
 
-            auto res = strstr_P(ERROR, BUFFER);
+            auto res = strstr("ERROR", BUFFER);
             if (res)
                 return false;
         }
@@ -379,19 +421,25 @@ void SmsClass::checkSIM()
     }
 
     if(millis()-_initStart<7777) return;
-
-    if(millis()-_lastCPIN<7777) return;
+    if(millis()-_lastCommand<4444) return;
+    _lastCommand = millis();
+    //if(millis()-_lastCPIN<7777) return;
     if(_parsingData && _smsSendStarted) return;
-    _lastCPIN = millis();
+   // _lastCPIN = millis();
     if(_simStatus==0)
     {
-        sms->println(F("AT+CPIN?"));
+        
+        lastCommand = CMD_CPIN;
+        sms.println("AT+CPIN?");
+        //if(!waitOk())
+           // _simStatus = -1;
     } else if(strlen(simNumber)==0)
     {
-        sms->println(F("AT+CNUM"));
+        lastCommand = CMD_CNUM;
+        sms.println("AT+CNUM");
     } else if(getSignal()==-1)
     {
-        sms->println(F("AT+CSQ"));
+        requestCSQ();
     }
 }
 
@@ -458,12 +506,15 @@ void SmsClass::parseSMS(char* command)
         strcpy(Settings.Current.Monitor,number);
         Settings.SaveConfig();
         startSend(number);
-        sms->println(F("444"));
+        sms.println("444");
         commitSend();
         return;
     }
     
     switch (BUFFER[0]) {
+    case '*':
+        if(_onAlarm) _onAlarm();
+        return;
     case '!':
         ProcessSensors(BUFFER);
         send(number, "!7");
@@ -501,10 +552,10 @@ void SmsClass::parseSMS(char* command)
     default:;
     }
 
-    sms->println(F("AT"));
-    while(!readLine()){}
-    sms->println(F("AT+CMGD=1,1"));
-
+   // sms.println("AT");
+  //  while(!readLine()){}
+   // sms.println("AT+CMGD=1,1");
+    delay(1111);
     _parsingData = false;
 }
 
@@ -512,12 +563,12 @@ void SmsClass::parseData(char* command)
 {
     if (strlen(command) == 0) return;
 
-    if(strcmp_P(command,CallReady)==0)
+    if(strcmp(command,"Call Ready")==0)
     {
         _isReady = true;
     } else
 
-    if(strcmp_P(command,NO_SIM)==0)
+    if(strcmp(command,"+CME ERROR: SIM not inserted")==0)
     {
         _simStatus = -1;
     } else
@@ -527,7 +578,10 @@ void SmsClass::parseData(char* command)
         _isReady = true;
         _simStatus = 1;
         if(strlen(simNumber)==0)
-            sms->println(F("AT+CNUM"));
+        {
+            lastCommand = CMD_CNUM;
+            sms.println("AT+CNUM");
+        }
     } else
 
     if (startsWith("+CSQ:", command))
@@ -544,13 +598,16 @@ void SmsClass::parseData(char* command)
     {
         _isRegistered = true;        
         _isReady = true;
-        
-        if(!(_parsingData || _smsSendStarted))
-            sms->println(F("AT+CSQ"));
+        requestCSQ();
     } else
 
-    if (strstr_P(command,CLIP)) //Hangup call
-        sms->println(F("ATH"));
+    if (strstr(command,"+CLIP:")) //Hangup call
+        sms.println("ATH");
     else if (startsWith("+CMT:", command)) //New message
         parseSMS(command);
+    //else if(strstr(command,ERROR))
+    //{
+       // if(lastCommand == CMD_CPIN)
+          //  _simStatus = -1;
+    //}
 }

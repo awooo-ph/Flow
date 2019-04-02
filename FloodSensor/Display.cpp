@@ -4,11 +4,21 @@
 
 #include "Display.h"
 
-DisplayClass::DisplayClass(uint8_t address)
+#define DEBUG_SERIAL
+
+DisplayClass::DisplayClass()
 {
-    lcd = new LiquidCrystal_I2C(address,16,2);
-    _address = address;
-    //_lcdFound = lcd;
+    //_address = address;
+
+    if(!deviceExists())
+    {
+#ifdef DEBUG_SERIAL
+        Serial.println("LCD NOT CONNECTED");
+#endif
+        return;
+    }
+
+    lcd = new LiquidCrystal_I2C(LCD_ADDRESS,16,2);
 }
 
 void DisplayClass::showWelcome()
@@ -66,8 +76,21 @@ void DisplayClass::draw()
 
 void DisplayClass::begin()
 {
-    lcd->begin();
-    _lcdFound = true;
+    if(_lcdFound)
+        lcd->begin();
+}
+
+bool DisplayClass::deviceExists()
+{
+    Wire.beginTransmission(LCD_ADDRESS);
+    auto error = Wire.endTransmission();
+    _lcdFound = error == 0;
+
+#ifdef DEBUG_SERIAL
+    Serial.println(F("DEVICE DOES NOT EXIST!"));
+#endif
+
+    return _lcdFound;
 }
 
 void DisplayClass::setSignal(int signal)

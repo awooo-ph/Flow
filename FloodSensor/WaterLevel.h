@@ -3,6 +3,12 @@
 #ifndef _WATERLEVEL_h
 #define _WATERLEVEL_h
 
+#define LEVEL1 7
+#define LEVEL2 6
+#define LEVEL3 5
+#define LEVEL4 4
+#define LEVEL5 3
+
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
 #else
@@ -17,8 +23,8 @@ private:
     void (*onLevelChangeCallback)(uint8_t level) = nullptr;
     uint8_t _currentLevel = 0;
     uint8_t _newWaterLevel = 0;
-    uint8_t _levelPIN[5] = { A0,A1,A2,A3,A6 };
-    uint8_t _levelEnablePin = 10;
+    uint8_t _levelPIN[5] = { LEVEL1,LEVEL2,LEVEL3,LEVEL4,LEVEL5 };
+    //uint8_t _levelEnablePin = 10;
     unsigned long _lastLevelCheck = 0;
     unsigned long _waterLevelChanged = 0;
 

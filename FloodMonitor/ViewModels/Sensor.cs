@@ -591,19 +591,34 @@ namespace FloodMonitor.ViewModels
         
         public void SetLevel(int level)
         {
-            awooo.Context.Post(d=>{
-                var newLevel = new WaterLevel()
+
+            try
+            {
+                awooo.Context.Post(d=>{
+                    var newLevel = new WaterLevel()
+                    {
+                        Level = level,
+                        SensorId = Id
+                    };
+                    newLevel.Save();
+                    WaterLevel = level;
+                    LastHeartBeat = DateTime.Now;
+                    Save();
+                    LatestLevel = newLevel;
+                    WaterLevels.Add(newLevel);
+                },null);
+                var msg = Config.GetMessage(level);
+                if (string.IsNullOrEmpty(msg)) return;
+                foreach (var monitor in Monitor.Cache)
                 {
-                    Level = level,
-                    SensorId = Id
-                };
-                newLevel.Save();
-                WaterLevel = level;
-                LastHeartBeat = DateTime.Now;
-                Save();
-                LatestLevel = newLevel;
-                WaterLevels.Add(newLevel);
-            },null);
+                    if(!monitor.Number.IsCellNumber()) continue;
+                    Modem.Instance.SendMessage(monitor.Number,msg);
+                }
+            }
+            catch (Exception e)
+            {
+                //
+            }
         }
     }
 }

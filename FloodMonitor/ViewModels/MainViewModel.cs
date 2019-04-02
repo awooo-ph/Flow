@@ -126,6 +126,42 @@ namespace FloodMonitor.ViewModels
                     ShowSensorSettings = true;
                 }));
 
+        private ICommand _deleteMonitorCommand;
+
+        public ICommand DeleteMonitorCommand => _deleteMonitorCommand ?? (_deleteMonitorCommand = new DelegateCommand<Monitor>(
+        async d =>
+        {
+            if (!(d is Monitor m)) return;
+
+            if (!await MessageDialog.Show("Confirm Delete",
+                $"Are you sure you want to delete {m.Name}?",
+                "_DELETE RESIDENT", "CANCEL")) return;
+
+            m.Delete();
+        }, d =>
+        {
+            if (!(d is Monitor m)) return false;
+            return CurrentUser?.IsAdmin??false;
+        }));
+
+        private ICommand _deleteUserCommand;
+
+        public ICommand DeleteUserCommand => _deleteUserCommand ?? (_deleteUserCommand = new DelegateCommand<User>(
+        async d =>
+        {
+            if (!(d is User m)) return;
+
+            if (!await MessageDialog.Show("Confirm Delete",
+                $"Are you sure you want to delete {m.Fullname}?",
+                "_DELETE USER", "CANCEL")) return;
+
+            m.Delete();
+        }, d =>
+        {
+            if (!(d is User m)) return false;
+            return CurrentUser?.IsAdmin ?? false;
+        }));
+
         private ICommand _ShowSettingsCommand;
 
         public ICommand ShowSettingsCommand =>

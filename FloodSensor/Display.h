@@ -12,10 +12,12 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
+#define LCD_ADDRESS 0x27
+
 class DisplayClass
 {
 private:
-    uint8_t _address;
+    //uint8_t _address = 0x27;
     bool _lcdFound = false;
     bool _initialized = false;
     unsigned int _lastUpdate=0;
@@ -53,7 +55,7 @@ private:
 };
 
  public:
-    DisplayClass(uint8_t);
+    DisplayClass();
 	void showWelcome();
     void clear();
     void draw();
@@ -63,6 +65,7 @@ private:
     void setDescription(char * desc);
     void showSettingsChanged();
     void update();
+    bool deviceExists();
 };
 
 extern DisplayClass Display;

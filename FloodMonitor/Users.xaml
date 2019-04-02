@@ -6,15 +6,28 @@
              xmlns:local="clr-namespace:FloodMonitor"
              xmlns:viewModels="clr-namespace:FloodMonitor.ViewModels"
              xmlns:converters="clr-namespace:FloodMonitor.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
     <DataGrid AutoGenerateColumns="False" ItemsSource="{Binding Source={x:Static viewModels:User.Cache}}"
               Margin="47 74 47 47"
               IsReadOnly="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin,Converter={converters:Inverter}}"
-              CanUserAddRows="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}"
-              CanUserDeleteRows="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=CurrentUser.IsAdmin}">
+              CanUserAddRows="True">
       <DataGrid.Columns>
+        <DataGridTemplateColumn>
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <Button Command="{Binding Source={x:Static viewModels:MainViewModel.Instance},Path=DeleteUserCommand}"
+                      CommandParameter="{Binding}"
+                      Style="{StaticResource MaterialDesignFlatButton}"
+                      Padding="0" VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch"
+                      Height="Auto"
+                      Content="{materialDesign:PackIcon Delete}"/>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
         <DataGridTextColumn Header="USERNAME" Binding="{Binding Username,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
                             EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"/>
         <DataGridTextColumn Header="NAME" Binding="{Binding Fullname,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
@@ -22,8 +35,20 @@
         <DataGridTextColumn Header="POSITION" Binding="{Binding Position,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
                             EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"/>
         <DataGridCheckBoxColumn Header="ADMIN"
-                                Binding="{Binding IsAdmin,UpdateSourceTrigger=PropertyChanged}"
-                                EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"/>
+                                Binding="{Binding IsAdmin,UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}">
+          <DataGridCheckBoxColumn.ElementStyle>
+            <Style BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
+                   TargetType="CheckBox">
+              <Setter Property="IsEnabled" Value="{Binding DataContext.IsValid,FallbackValue=false,RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            </Style>
+          </DataGridCheckBoxColumn.ElementStyle>
+          <DataGridCheckBoxColumn.EditingElementStyle>
+            <Style BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
+                   TargetType="CheckBox">
+              <Setter Property="IsEnabled" Value="{Binding DataContext.IsValid,FallbackValue=false,RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            </Style>
+          </DataGridCheckBoxColumn.EditingElementStyle>
+        </DataGridCheckBoxColumn>
       </DataGrid.Columns>
     </DataGrid>
   </Grid>

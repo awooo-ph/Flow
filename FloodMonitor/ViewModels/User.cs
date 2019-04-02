@@ -25,8 +25,13 @@ namespace FloodMonitor.ViewModels
                 if (value == _Username) return;
                 _Username = value;
                 OnPropertyChanged(nameof(Username));
+                OnPropertyChanged(nameof(IsValid));
+                OnPropertyChanged("");
             }
         }
+
+        [Ignore]
+        public bool IsValid => GetIsValid();
 
         private string _Password;
         
@@ -65,6 +70,19 @@ namespace FloodMonitor.ViewModels
                 _Position = value;
                 OnPropertyChanged(nameof(Position));
             }
+        }
+
+        protected override string GetErrorInfo(string prop)
+        {
+            if (prop != nameof(Username))
+            {
+                var e = base.GetErrorInfo(nameof(Username));
+                if (!string.IsNullOrEmpty(e))
+                {
+                    return "USERNAME IS REQUIRED";
+                }
+            }
+            return base.GetErrorInfo(prop);
         }
 
         private bool _IsAdmin;

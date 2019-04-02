@@ -58,7 +58,7 @@ namespace FloodMonitor.ViewModels
         }
         
         private bool pauseReading = false;
-        
+        private bool logCommands = false;
         private async void ReadSerial()
         {
             while (_port?.IsOpen??false)
@@ -81,7 +81,7 @@ namespace FloodMonitor.ViewModels
                 if (!string.IsNullOrEmpty(cmd))
                 {
                     ProcessCommand(cmd);
-                    AddLog(ModemLog.LogTypes.AtCommand, cmd);
+                    if(logCommands) AddLog(ModemLog.LogTypes.AtCommand, cmd);
                 }
                 //await Task.Delay(111);
             }
@@ -121,10 +121,11 @@ namespace FloodMonitor.ViewModels
         {
             if (_port == null) return;
             if (_checking) return;
+            if (_sendingMessage) return;
             _checking = true;
             _okReceived = false;
             _startCheck = DateTime.Now;
-            _port.WriteLine("AT");
+            SendAT("AT");
             await Task.Factory.StartNew(async () =>
             {
                 while (!_okReceived && (DateTime.Now-_startCheck).TotalMilliseconds<4444)
@@ -139,19 +140,21 @@ namespace FloodMonitor.ViewModels
         }
 
         private bool _okReceived = false;
-        private async void ProcessCommand(string command)
+        private void ProcessCommand(string command)
         {
             if (_port == null) return;
 
             if (command == "OK")
             {
+                _errorReceved = false;
                 _okReceived = true;
                 IsOnline = true;
                 return;
             }
-            if(command.Contains("ERROR"))
+            if (command.Contains("ERROR"))
             {
-                _okReceived = false;
+                _errorReceved = true;
+                _okReceived = true;
                 return;
             }
             if (command.StartsWith("+CSQ:"))
@@ -161,30 +164,33 @@ namespace FloodMonitor.ViewModels
                 if (!int.TryParse(csq, out iCsq))
                     Signal = 0;
                 else
-                {    
-                    if (iCsq == 99 || iCsq==0) Signal = 0;
-                    else if (iCsq < 7) Signal =1;
+                {
+                    if (iCsq == 99 || iCsq == 0) Signal = 0;
+                    else if (iCsq < 7) Signal = 1;
                     else if (iCsq < 14) Signal = 2;
                     else if (iCsq < 20) Signal = 3;
                     else Signal = 4;
                 }
-            } else if (command.StartsWith("+CNUM"))
+            }
+            else if (command.StartsWith("+CNUM"))
             {
                 command = command.Substring(command.IndexOf(",\"") + 2);
                 Number = command.Substring(0, command.IndexOf("\","));
-            } else if (command.StartsWith("+CSPN:"))
+            }
+            else if (command.StartsWith("+CSPN:"))
             {
                 Operator = command.Substring(8, command.IndexOf("\",") - 8);
-            } else if (command.StartsWith("+CLIP:"))
+            }
+            else if (command.StartsWith("+CLIP:"))
             {
-                _port.WriteLine("ATH");
+                SendAT("ATH");
             }
             else if (command.StartsWith("+CMT:")) //New message
                 ParseSms(command);
             else if (command.StartsWith("+CMTI:"))
             {
                 var index = command.Substring(command.IndexOf(",") + 1);
-                _port.WriteLine($"AT+CMGR={index}");
+                SendAT($"AT+CMGR={index}");
             }
         }
 
@@ -225,6 +231,12 @@ namespace FloodMonitor.ViewModels
             {
                 while (_port!=null)
                 {
+                    if (_sendingMessage)
+                    {
+                        await Task.Delay(1111);
+                        continue;
+                    }
+
                     Tuple<string,int> cmd = null;
                     lock (_atCommandsLock)
                     {
@@ -250,6 +262,7 @@ namespace FloodMonitor.ViewModels
                     }
 
                     _port?.WriteLine(cmd.Item1);
+
                     if (cmd.Item2 > 0)
                         await Task.Delay(cmd.Item2);
                 }
@@ -301,12 +314,14 @@ namespace FloodMonitor.ViewModels
             }
         }
 
+        private bool _errorReceved = false;
         private async Task<bool> WaitOk()
         {
             _okReceived = false;
+            _errorReceved = false;
             for (var i = 0; i < 77; i++)
             {
-                if(_okReceived) return true;
+                if (_okReceived) return !_errorReceved;
                 await Task.Delay(777);
             }
 
@@ -319,7 +334,7 @@ namespace FloodMonitor.ViewModels
             {
                 try
                 {
-                    _port = new SerialPort(port, 115200);
+                    _port = new SerialPort(port, 57600);
                     _port.NewLine = "\r\n";
                     _port.DtrEnable = false;
                     _port.Open();
@@ -376,12 +391,15 @@ namespace FloodMonitor.ViewModels
                     await WaitOk();
                 }
 
+                logCommands = true;
+
                 _port.WriteLine("AT+CPIN?");
                 HasSIM = await WaitOk();
                 if (HasSIM)
                 {
                     var commands = new List<Tuple<string, string>>()
                     {
+                        new Tuple<string, string>("AT+CMEE=2",""),
                         new Tuple<string, string>("AT+CMGD=1,1","Clearing inbox"),
                         new Tuple<string, string>("AT+CNUM","Getting SIM card number"),
                         new Tuple<string, string>("AT+CSMS=1","Setting up SMS Service"),
@@ -441,46 +459,51 @@ namespace FloodMonitor.ViewModels
                     await Task.Delay(7777);
                 }
 
-                if (Outbox.Count == 0)
+                if (Outbox.Count == 0 || _sendingMessage)
                 {
                     await Task.Delay(1111);
                     continue;
                 }
+                _sendingMessage = true;
 
                 var sms = Outbox.Dequeue();
                 if (sms == null)
                 {
                     await Task.Delay(1111);
+                    _sendingMessage = false;
                     continue;
                 }
 
-                if (string.IsNullOrEmpty(sms.Number) || string.IsNullOrEmpty(sms.Message) || !sms.Number.IsCellNumber()) continue;
+                if (string.IsNullOrEmpty(sms.Number) || string.IsNullOrEmpty(sms.Message) || !sms.Number.IsCellNumber())
+                {
+                    _sendingMessage = false;
+                    continue;
+                }
                 
                 if(!Config.Default.ShowAtCommand) AddLog(ModemLog.LogTypes.Info, $"Sending message...");
-
-                while (_sendingMessage)
-                {
-                    await Task.Delay(777);
-                }
-
-                _sendingMessage = true;
+                
+                
                 _port.WriteLine("AT");
                 await WaitOk();
-
+                pauseReading = true;
                     await Task.Delay(111);
                     _port.WriteLine($"AT+CMGS=\"{sms.Number}\"");
-                    await Task.Delay(1111);
-                    _port.WriteLine(sms.Message);
-                    _port.Write($"{(char)26}");
+                    await Task.Delay(777);
+                    _port.Write($"{sms.Message}{(char)26}");
+                //var b = new byte[]{26};
                 
+                //_port.Write(b,0,1);
+                    //_port.Write($"{(char)26}");
+                pauseReading = false;
+                //await Task.Delay(1111);
                     if(!Config.Default.ShowAtCommand && sms.Log) 
                         if(await WaitOk())
                             AddLog(ModemLog.LogTypes.Info, "Message Sent!");
                         else
                             AddLog(ModemLog.LogTypes.Info, "Sending Message Failed!");
 
-                _sendingMessage = false;
                 await Task.Delay(1111);
+                _sendingMessage = false;
             }
         }
         
@@ -578,12 +601,18 @@ namespace FloodMonitor.ViewModels
         private ICommand _sendAtCommand;
         public ICommand SendAtCommand => _sendAtCommand ?? (_sendAtCommand = new DelegateCommand(async d =>
         {
-            while (_sendingMessage)
+
+            for (int i = 0; i < 4; i++)
             {
-                await Task.Delay(1111);
+                if (_sendingMessage)
+                {
+                    await Task.Delay(1111);
+                } else break;
             }
 
-            _port.WriteLine(AtCommand);
+            if (_sendingMessage) return;
+
+            SendAT(AtCommand);
             AtCommand = "";
         },d=>(_port?.IsOpen??false) && !string.IsNullOrEmpty(AtCommand)));
 

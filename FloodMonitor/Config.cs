@@ -110,6 +110,26 @@ namespace FloodMonitor
             }
         }
 
+        public static string GetMessage(int level)
+        {
+            if (!Default.SendSms) return null;
+            switch (level)
+            {
+                    case 1:
+                        return Default.Level1Message;
+                    case 2:
+                        return Default.Level2Message;
+                    case 3:
+                        return Default.Level3Message;
+                    case 4:
+                        return Default.Level4Message;
+                    case 5:
+                        return Default.Level5Message;
+            }
+
+            return null;
+        }
+
         private string _Level1Message;
         [Trackable]
         public string Level1Message
